@@ -61,6 +61,10 @@ def state(client):
     return client.status()['state']
 
 
+def volume(client):
+    return int(client.status()['volume'])
+
+
 def playpause(client):
     if state(client) == 'stop':
         play(client)
@@ -70,10 +74,6 @@ def playpause(client):
 
 def current(client):
     return fmtsong(client.currentsong())
-
-
-def volume(client):
-    return int(client.status()['volume'])
 
 
 @exception_converter(CommandError,
