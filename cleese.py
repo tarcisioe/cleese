@@ -15,15 +15,26 @@ def song_retriever(args):
 
 
 def fmtsong(songdata):
-    return('/'.join(songdata[i] for i in ('title', 'album', 'artist')))
+    return('/'.join(songdata[i] for i in ('artist', 'album', 'title')))
 
 
-def emptyargs(args):
+def empty_args(args):
     return []
+
+
+def state(client):
+    return client.status()['state']
 
 
 def play(client):
     client.play()
+
+
+def playpause(client):
+    if state(client) == 'stop':
+        play(client)
+    else:
+        pause(client)
 
 
 def pause(client):
@@ -43,7 +54,7 @@ def prev(client):
 
 
 def current(client):
-    print(fmtsong(client.currentsong()))
+    return fmtsong(client.currentsong())
 
 
 def call_command(client, command, arguments):
@@ -52,6 +63,12 @@ def call_command(client, command, arguments):
 
 def clear(client):
     client.clear()
+
+
+def printer(function):
+    def print_return(*args):
+        print(function(*args))
+    return print_return
 
 
 def add(client, to_add):
@@ -67,14 +84,16 @@ def replace(client, to_replace):
     add(client, to_replace)
     play(client)
 
-commands = {'play': (play, emptyargs),
-            'pause': (pause, emptyargs),
-            'stop': (stop, emptyargs),
-            'next': (next_song, emptyargs),
-            'previous': (prev, emptyargs),
-            'prev': (prev, emptyargs),
-            'current': (current, emptyargs),
-            'clear': (clear, emptyargs),
+commands = {'state': (printer(state), empty_args),
+            'play': (play, empty_args),
+            'playpause': (playpause, empty_args),
+            'pause': (pause, empty_args),
+            'stop': (stop, empty_args),
+            'next': (next_song, empty_args),
+            'previous': (prev, empty_args),
+            'prev': (prev, empty_args),
+            'current': (printer(current), empty_args),
+            'clear': (clear, empty_args),
             'add': (add, song_retriever),
             'replace': (replace, song_retriever), }
 
