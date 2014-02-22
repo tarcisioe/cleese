@@ -2,8 +2,8 @@
 
 import sys
 
+from functools import wraps
 from mpd import MPDClient, CommandError
-
 
 def exception_converter(exception_type,
                         message,
@@ -12,6 +12,7 @@ def exception_converter(exception_type,
         new_exception_type = exception_type
 
     def exception_converter_inner(f):
+        @wraps(f)
         def rethrower(*args):
             try:
                 retval = f(*args)
