@@ -53,8 +53,8 @@ def clear(client):
 
 
 @command(volume_retriever)
-def setvolume(client):
-    client.setvol()
+def setvolume(client, volume):
+    client.setvol(volume)
 
 
 @command(empty_args, wrapper=printer)
