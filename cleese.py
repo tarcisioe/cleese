@@ -3,7 +3,9 @@
 import sys
 
 from functools import wraps
+from command import command, get_command, command_names
 from mpd import MPDClient, CommandError
+
 
 def exception_converter(exception_type,
                         message,
@@ -49,23 +51,52 @@ def fmtsong(songdata):
     return('/'.join(songdata[i] for i in ('artist', 'album', 'title')))
 
 
-play = MPDClient.play
-pause = MPDClient.pause
-stop = MPDClient.stop
-next_song = MPDClient.next
-prev = MPDClient.previous
-clear = MPDClient.clear
-setvolume = MPDClient.setvol
+@command(empty_args)
+def play(client):
+    client.play()
 
 
+@command(empty_args)
+def pause(client):
+    client.pause()
+
+
+@command(empty_args)
+def stop(client):
+    client.stop()
+
+
+@command(empty_args, names=['next'])
+def next_song(client):
+    client.next()
+
+
+@command(empty_args)
+def prev(client):
+    client.previous()
+
+
+@command(empty_args)
+def clear(client):
+    client.clear()
+
+
+@command(volume_retriever)
+def setvolume(client):
+    client.setvol()
+
+
+@command(empty_args)
 def state(client):
     return client.status()['state']
 
 
+@command(empty_args, names=['volume', 'vol'], wrapper=printer)
 def volume(client):
     return int(client.status()['volume'])
 
 
+@command(empty_args)
 def playpause(client):
     if state(client) == 'stop':
         play(client)
@@ -73,10 +104,12 @@ def playpause(client):
         pause(client)
 
 
+@command(empty_args, wrapper=printer)
 def current(client):
     return fmtsong(client.currentsong())
 
 
+@command(single_argument_retriever)
 @exception_converter(CommandError,
                      'No files found in database matching: {args[1]}',
                      ValueError)
@@ -84,12 +117,14 @@ def add(client, to_add):
     client.add(to_add)
 
 
+@command(single_argument_retriever)
 def replace(client, to_replace):
     clear(client)
     add(client, to_replace)
     play(client)
 
 
+@command(volume_retriever)
 def volumestep(client, step):
     try:
         client.setvol(volume(client) + step)
@@ -101,23 +136,6 @@ def call_command(client, command, arguments):
     command(*([client] + arguments))
 
 
-commands = {'state': (printer(state), empty_args),
-            'play': (play, empty_args),
-            'playpause': (playpause, empty_args),
-            'pause': (pause, empty_args),
-            'stop': (stop, empty_args),
-            'next': (next_song, empty_args),
-            'previous': (prev, empty_args),
-            'prev': (prev, empty_args),
-            'current': (printer(current), empty_args),
-            'clear': (clear, empty_args),
-            'volume': (printer(volume), empty_args),
-            'vol': (printer(volume), empty_args),
-            'add': (add, single_argument_retriever),
-            'replace': (replace, single_argument_retriever),
-            'setvolume': (setvolume, volume_retriever),
-            'volumestep': (volumestep, volume_retriever), }
-
 if __name__ == '__main__':
     client = MPDClient()
     client.connect('localhost', 6600)
@@ -125,14 +143,14 @@ if __name__ == '__main__':
     args = sys.argv[:]
 
     try:
-        command, argretriever = commands[args[1]]
+        command_function, argretriever = get_command(args[1])
     except (IndexError, KeyError):
         print('Please specify a command from: ',
-              ', '.join(sorted(commands)),
+              ', '.join(sorted(command_names())),
               '.', sep="")
         exit(-1)
 
     try:
-        call_command(client, command, argretriever(args[2:]))
+        call_command(client, command_function, argretriever(args[2:]))
     except (IndexError, ValueError) as e:
         print(e)
