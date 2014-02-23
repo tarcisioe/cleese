@@ -2,34 +2,9 @@
 
 import sys
 
-from functools import wraps
 from command import command, get_command, command_names
+from utils import exception_converter, printer, fmtsong
 from mpd import MPDClient, CommandError
-
-
-def exception_converter(exception_type,
-                        message,
-                        new_exception_type=None):
-    if new_exception_type is None:
-        new_exception_type = exception_type
-
-    def exception_converter_inner(f):
-        @wraps(f)
-        def rethrower(*args):
-            try:
-                retval = f(*args)
-            except exception_type:
-                raise new_exception_type(message.format(args=args))
-            else:
-                return retval
-        return rethrower
-    return exception_converter_inner
-
-
-def printer(function):
-    def print_return(*args):
-        print(function(*args))
-    return print_return
 
 
 @exception_converter(IndexError, 'Command expects an argument.')
@@ -45,10 +20,6 @@ def volume_retriever(args):
 
 def empty_args(args):
     return []
-
-
-def fmtsong(songdata):
-    return('/'.join(songdata[i] for i in ('artist', 'album', 'title')))
 
 
 @command(empty_args)
