@@ -9,7 +9,7 @@ from mpd import MPDClient, CommandError
 
 @exception_converter(IndexError, 'Command expects an argument.')
 def single_argument_retriever(args):
-    return [args[0]]
+    return args[:1]
 
 
 @exception_converter(ValueError,
@@ -57,7 +57,7 @@ def setvolume(client):
     client.setvol()
 
 
-@command(empty_args)
+@command(empty_args, wrapper=printer)
 def state(client):
     return client.status()['state']
 
