@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import sys
 
@@ -107,7 +107,7 @@ def call_command(client, command, arguments):
     command(*([client] + arguments))
 
 
-if __name__ == '__main__':
+def main():
     client = MPDClient()
     client.connect('localhost', 6600)
 
@@ -125,3 +125,6 @@ if __name__ == '__main__':
         call_command(client, command_function, argretriever(args[2:]))
     except (IndexError, ValueError) as e:
         print(e)
+
+if __name__ == '__main__':
+    main()
