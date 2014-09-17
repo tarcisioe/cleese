@@ -2,9 +2,10 @@
 
 import sys
 
-from command import command, get_command, command_names
-from utils import exception_converter, printer, fmtsong
 from mpd import MPDClient, CommandError
+
+from cleese.command import command, get_command, command_names
+from cleese.utils import exception_converter, printer, fmtsong
 
 
 @exception_converter(IndexError, 'Command expects an argument.')
