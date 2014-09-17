@@ -126,6 +126,3 @@ def main():
         call_command(client, command_function, argretriever(args[2:]))
     except (IndexError, ValueError) as e:
         print(e)
-
-if __name__ == '__main__':
-    main()
