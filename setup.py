@@ -6,7 +6,7 @@ setup(
     package_dir={'': 'src'},
     entry_points={
         'console_scripts' : [
-            'cleese = cleese.__main__:main',
+            'cleese = cleese.__main__:run',
         ],
     },
     install_requires=[
