@@ -24,8 +24,11 @@ def main(arguments):
 
     args = arg_parser.parse_args(arguments)
 
-
-    args.command(args)
+    try:
+        args.command(args)
+    except AttributeError:
+        arg_parser.print_usage()
+        exit(1)
 
 
 def run():
