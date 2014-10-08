@@ -1,100 +1,101 @@
 from mpd import CommandError
 
+from cleese.clients import get_default_client
 from cleese.command import command
 from cleese.utils import exception_converter, printer, fmtsong
-
-
-@exception_converter(IndexError, 'Command expects an argument.')
-def single_argument_retriever(args):
-    return args[:1]
-
-
-@exception_converter(ValueError,
-                     'Cannot make a number out of "{args[0][0]}".')
-def volume_retriever(args):
-    return [int(i) for i in single_argument_retriever(args)]
 
 
 def empty_args(args):
     return []
 
 
-@command(empty_args)
-def play(client):
-    client.play()
+@command()
+def play(_):
+    get_default_client().play()
 
 
-@command(empty_args)
-def pause(client):
-    client.pause()
+@command()
+def pause(_):
+    get_default_client().pause()
 
 
-@command(empty_args)
-def stop(client):
-    client.stop()
+@command()
+def stop(_):
+    get_default_client().stop()
 
 
-@command(empty_args, names=['next'])
-def next_song(client):
-    client.next()
+@command(names=['next'])
+def next_song(_):
+    get_default_client().next()
 
 
-@command(empty_args)
-def prev(client):
-    client.previous()
+@command()
+def prev(_):
+    get_default_client().previous()
 
 
-@command(empty_args)
-def clear(client):
-    client.clear()
+@command()
+def clear(_):
+    get_default_client().clear()
 
 
-@command(volume_retriever)
-def setvolume(client, volume):
-    client.setvol(volume)
+@command([('volume', int)])
+def setvolume(args):
+    get_default_client().setvol(args.volume)
 
 
-@command(empty_args, wrapper=printer)
-def state(client):
-    return client.status()['state']
+@command(wrapper=printer)
+def state(_):
+    return get_default_client().status()['state']
 
 
-@command(empty_args, names=['volume', 'vol'], wrapper=printer)
-def volume(client):
+def get_volume(client):
     return int(client.status()['volume'])
 
 
-@command(empty_args)
-def playpause(client):
+@command(names=['volume', 'vol'])
+def volume(_):
+    print(get_volume(get_default_client()))
+
+
+@command()
+def playpause(_):
+    client = get_default_client()
     if state(client) == 'stop':
         play(client)
     else:
         pause(client)
 
 
-@command(empty_args, wrapper=printer)
-def current(client):
-    return fmtsong(client.currentsong())
+@command()
+def current(_):
+    print(fmtsong(get_default_client().currentsong()))
 
 
-@command(single_argument_retriever)
 @exception_converter(CommandError,
                      'No files found in database matching: {args[1]}',
                      ValueError)
-def add(client, to_add):
-    client.add(to_add)
+def add_to(client, song):
+    client.add(song)
 
 
-@command(single_argument_retriever)
-def replace(client, to_replace):
-    clear(client)
-    add(client, to_replace)
-    play(client)
+@command([('what', str)])
+def add(args):
+    add_to(get_default_client(), args.what)
 
 
-@command(volume_retriever)
-def volumestep(client, step):
+@command([('what', str)])
+def replace(args):
+    client = get_default_client()
+    client.clear()
+    add_to(client, args.what)
+    client.play()
+
+
+@command([('step', int)])
+def volumestep(args):
+    client = get_default_client()
     try:
-        client.setvol(volume(client) + step)
+        client.setvol(get_volume(client) + args.step)
     except CommandError:
         pass
