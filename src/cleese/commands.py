@@ -1,10 +1,6 @@
-#!/usr/bin/env python
+from mpd import CommandError
 
-import sys
-
-from mpd import MPDClient, CommandError
-
-from cleese.command import command, get_command, command_names
+from cleese.command import command
 from cleese.utils import exception_converter, printer, fmtsong
 
 
@@ -102,27 +98,3 @@ def volumestep(client, step):
         client.setvol(volume(client) + step)
     except CommandError:
         pass
-
-
-def call_command(client, command, arguments):
-    command(*([client] + arguments))
-
-
-def main():
-    client = MPDClient()
-    client.connect('localhost', 6600)
-
-    args = sys.argv[:]
-
-    try:
-        command_function, argretriever = get_command(args[1])
-    except (IndexError, KeyError):
-        print('Please specify a command from: ',
-              ', '.join(sorted(command_names())),
-              '.', sep="")
-        exit(-1)
-
-    try:
-        call_command(client, command_function, argretriever(args[2:]))
-    except (IndexError, ValueError) as e:
-        print(e)
