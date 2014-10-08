@@ -12,8 +12,8 @@ def exception_converter(exception_type,
         def rethrower(*args):
             try:
                 retval = f(*args)
-            except exception_type:
-                raise new_exception_type(message.format(args=args))
+            except exception_type as e:
+                raise new_exception_type(message.format(args=args)) from e
             else:
                 return retval
         return rethrower
