@@ -99,3 +99,7 @@ def volumestep(args):
         client.setvol(get_volume(client) + args.step)
     except CommandError:
         pass
+
+@command()
+def update(_):
+    get_default_client().update()

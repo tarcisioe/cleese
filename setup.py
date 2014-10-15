@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name='cleese',
-    version='0.3',
-    packages=find_packages(),
+    version='0.4',
+    packages=find_packages('src'),
     package_dir={'': 'src'},
     entry_points={
         'console_scripts' : [
