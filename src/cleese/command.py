@@ -11,7 +11,10 @@ class SubCommand:
         name, *names = self.names
         parser = subparsers.add_parser(name, aliases=names)
         for arg_name, arg_type in self.arg_format:
-            parser.add_argument(arg_name, type=arg_type)
+            help_string = ''
+            if type(arg_type) is tuple:
+                arg_type, help_string = arg_type
+            parser.add_argument(arg_name, type=arg_type, help=help_string)
         def call(args):
             arg_dict = {name: getattr(args, name) for name, _ in self.arg_format}
             self.function(**arg_dict)
