@@ -1,7 +1,7 @@
 from mpd import CommandError
 
 from cleese.clients import get_default_client
-from cleese.command import command
+from cleese.command import command, Arg
 from cleese.utils import exception_converter, printer, fmtsong
 
 
@@ -40,7 +40,9 @@ def clear(_):
 
 
 @command()
-def setvolume(volume: (int, 'A volume value between 0 and 100.')):
+def setvolume(
+        volume: Arg(type=int, help='A volume value between 0 and 100.')
+):
     get_default_client().setvol(volume)
 
 
@@ -80,7 +82,7 @@ def add_to(client, song):
 
 
 @command()
-def replace(what: (str, 'What to replace.')):
+def replace(what: Arg(type=str, help='What to replace.')):
     client = get_default_client()
     client.clear()
     add_to(client, what)
@@ -88,12 +90,15 @@ def replace(what: (str, 'What to replace.')):
 
 
 @command()
-def add(what: (str, 'What to add.')):
+def add(what: Arg(type=str, help='What to add.')):
     add_to(get_default_client(), what)
 
 
 @command()
-def volumestep(step: (int, 'Step in which to modify volume, positive or negative.')):
+def volumestep(
+        step: Arg(type=int,
+                  help='Step in which to modify volume, positive or negative.')
+):
     client = get_default_client()
     try:
         client.setvol(get_volume(client) + step)

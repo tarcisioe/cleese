@@ -1,6 +1,12 @@
 _commands = []
 
 
+class Arg:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
 class SubCommand:
     def __init__(self, names, arg_format, function):
         self.names = names
@@ -10,14 +16,14 @@ class SubCommand:
     def attach(self, subparsers):
         name, *names = self.names
         parser = subparsers.add_parser(name, aliases=names)
-        for arg_name, arg_type in self.arg_format:
-            help_string = ''
-            if type(arg_type) is tuple:
-                arg_type, help_string = arg_type
-            parser.add_argument(arg_name, type=arg_type, help=help_string)
+
+        for name, arg in self.arg_format:
+            parser.add_argument(name, *(arg.args), **(arg.kwargs))
+
         def call(args):
             arg_dict = {name: getattr(args, name) for name, _ in self.arg_format}
             self.function(**arg_dict)
+
         parser.set_defaults(command=call)
 
 
