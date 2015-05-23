@@ -1,6 +1,12 @@
 _commands = []
 
 
+class Arg:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
 class SubCommand:
     def __init__(self, names, arg_format, function):
         self.names = names
@@ -10,16 +16,24 @@ class SubCommand:
     def attach(self, subparsers):
         name, *names = self.names
         parser = subparsers.add_parser(name, aliases=names)
-        for arg_name, arg_type in self.arg_format:
-            parser.add_argument(arg_name, type=arg_type)
-        parser.set_defaults(command=self.function)
+
+        for name, arg in self.arg_format:
+            parser.add_argument(name, *(arg.args), **(arg.kwargs))
+
+        def call(args):
+            arg_dict = {name: getattr(args, name) for name, _ in self.arg_format}
+            self.function(**arg_dict)
+
+        parser.set_defaults(command=call)
 
 
-def command(arg_format=[], names=[], wrapper=None):
+def command(names=[], wrapper=None):
     def inner(f):
         function = wrapper(f) if wrapper else f
 
         names_list = [f.__name__] if not names else names
+
+        arg_format = f.__annotations__.items()
 
         _commands.append(SubCommand(names_list, arg_format, function))
 

@@ -1,7 +1,7 @@
 from mpd import CommandError
 
 from cleese.clients import get_default_client
-from cleese.command import command
+from cleese.command import command, Arg
 from cleese.utils import exception_converter, printer, fmtsong
 
 
@@ -10,27 +10,27 @@ def empty_args(args):
 
 
 @command()
-def play(_):
+def play():
     get_default_client().play()
 
 
 @command()
-def pause(_):
+def pause():
     get_default_client().pause()
 
 
 @command()
-def stop(_):
+def stop():
     get_default_client().stop()
 
 
 @command(names=['next'])
-def next_song(_):
+def next_song():
     get_default_client().next()
 
 
 @command()
-def prev(_):
+def prev():
     get_default_client().previous()
 
 
@@ -39,13 +39,15 @@ def clear(_):
     get_default_client().clear()
 
 
-@command([('volume', int)])
-def setvolume(args):
-    get_default_client().setvol(args.volume)
+@command()
+def setvolume(
+        volume: Arg(type=int, help='A volume value between 0 and 100.')
+):
+    get_default_client().setvol(volume)
 
 
 @command(wrapper=printer)
-def state(_):
+def state():
     return get_default_client().status()['state']
 
 
@@ -54,12 +56,12 @@ def get_volume(client):
 
 
 @command(names=['volume', 'vol'])
-def volume(_):
+def volume():
     print(get_volume(get_default_client()))
 
 
 @command()
-def playpause(_):
+def playpause():
     client = get_default_client()
     if state(client) == 'stop':
         play(client)
@@ -68,7 +70,7 @@ def playpause(_):
 
 
 @command()
-def current(_):
+def current():
     print(fmtsong(get_default_client().currentsong()))
 
 
@@ -79,27 +81,30 @@ def add_to(client, song):
     client.add(song)
 
 
-@command([('what', str)])
-def add(args):
-    add_to(get_default_client(), args.what)
-
-
-@command([('what', str)])
-def replace(args):
+@command()
+def replace(what: Arg(type=str, help='What to replace.')):
     client = get_default_client()
     client.clear()
-    add_to(client, args.what)
+    add_to(client, what)
     client.play()
 
 
-@command([('step', int)])
-def volumestep(args):
+@command()
+def add(what: Arg(type=str, help='What to add.')):
+    add_to(get_default_client(), what)
+
+
+@command()
+def volumestep(
+        step: Arg(type=int,
+                  help='Step in which to modify volume, positive or negative.')
+):
     client = get_default_client()
     try:
-        client.setvol(get_volume(client) + args.step)
+        client.setvol(get_volume(client) + step)
     except CommandError:
         pass
 
 @command()
-def update(_):
+def update():
     get_default_client().update()
