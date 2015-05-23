@@ -5,6 +5,17 @@ from cleese.command import command, Arg
 from cleese.utils import exception_converter, printer, fmtsong
 
 
+@exception_converter(CommandError,
+                     'No files found in database matching: {args[1]}',
+                     ValueError)
+def add_to(client, song):
+    client.add(song)
+
+
+def get_volume(client):
+    return int(client.status()['volume'])
+
+
 @command()
 def play():
     get_default_client().play()
@@ -47,10 +58,6 @@ def state():
     return get_default_client().status()['state']
 
 
-def get_volume(client):
-    return int(client.status()['volume'])
-
-
 @command(names=['volume', 'vol'])
 def volume():
     print(get_volume(get_default_client()))
@@ -68,13 +75,6 @@ def playpause():
 @command()
 def current():
     print(fmtsong(get_default_client().currentsong()))
-
-
-@exception_converter(CommandError,
-                     'No files found in database matching: {args[1]}',
-                     ValueError)
-def add_to(client, song):
-    client.add(song)
 
 
 @command()
