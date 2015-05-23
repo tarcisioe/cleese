@@ -5,10 +5,6 @@ from cleese.command import command, Arg
 from cleese.utils import exception_converter, printer, fmtsong
 
 
-def empty_args(args):
-    return []
-
-
 @command()
 def play():
     get_default_client().play()
@@ -104,6 +100,7 @@ def volumestep(
         client.setvol(get_volume(client) + step)
     except CommandError:
         pass
+
 
 @command()
 def update():
