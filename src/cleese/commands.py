@@ -48,11 +48,10 @@ def play():
 
 @command()
 def playpause():
-    client = get_default_client()
-    if state(client) == 'stop':
-        play(client)
+    if state() == 'stop':
+        play()
     else:
-        pause(client)
+        pause()
 
 
 @command()
