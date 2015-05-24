@@ -22,7 +22,7 @@ def add(what: Arg(type=str, help='What to add.')):
 
 
 @command()
-def clear(_):
+def clear():
     get_default_client().clear()
 
 
