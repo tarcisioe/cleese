@@ -8,10 +8,6 @@ from mpd import MPDClient
 from cleese.command import attach_all
 
 
-def call_command(client, command, arguments):
-    command(*([client] + arguments))
-
-
 def main(arguments):
     client = MPDClient()
     client.connect('localhost', 6600)
