@@ -8,15 +8,8 @@ from mpd import MPDClient
 from cleese.command import attach_all
 
 
-def call_command(client, command, arguments):
-    command(*([client] + arguments))
-
-
 def main(arguments):
-    client = MPDClient()
-    client.connect('localhost', 6600)
-
-    arg_parser = ArgumentParser()
+    arg_parser = ArgumentParser(prog='cleese')
 
     subparsers = arg_parser.add_subparsers()
 
@@ -28,6 +21,9 @@ def main(arguments):
         args.command(args)
     except AttributeError:
         arg_parser.print_usage()
+        exit(1)
+    except ConnectionRefusedError:
+        print("Cannot connect to mpd server")
         exit(1)
 
 

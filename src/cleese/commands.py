@@ -5,23 +5,33 @@ from cleese.command import command, Arg
 from cleese.utils import exception_converter, printer, fmtsong
 
 
-def empty_args(args):
-    return []
+@exception_converter(CommandError,
+                     'No files found in database matching: {args[1]}',
+                     FileNotFoundError)
+def add_to(client, song):
+    client.add(song)
+
+
+def get_volume(client):
+    return int(client.status()['volume'])
 
 
 @command()
-def play():
-    get_default_client().play()
+def add(what: Arg(type=str, help='What to add.')):
+    try:
+        add_to(get_default_client(), what)
+    except FileNotFoundError as e:
+        print(e)
 
 
 @command()
-def pause():
-    get_default_client().pause()
+def clear():
+    get_default_client().clear()
 
 
 @command()
-def stop():
-    get_default_client().stop()
+def current():
+    print(fmtsong(get_default_client().currentsong()))
 
 
 @command(names=['next'])
@@ -30,13 +40,33 @@ def next_song():
 
 
 @command()
+def pause():
+    get_default_client().pause()
+
+
+@command()
+def play():
+    get_default_client().play()
+
+
+@command()
+def playpause():
+    if state() == 'stop':
+        play()
+    else:
+        pause()
+
+
+@command()
 def prev():
     get_default_client().previous()
 
 
 @command()
-def clear(_):
-    get_default_client().clear()
+def replace(what: Arg(type=str, help='What to replace.')):
+    clear()
+    add(what)
+    play()
 
 
 @command()
@@ -51,47 +81,19 @@ def state():
     return get_default_client().status()['state']
 
 
-def get_volume(client):
-    return int(client.status()['volume'])
+@command()
+def stop():
+    get_default_client().stop()
+
+
+@command()
+def update():
+    get_default_client().update()
 
 
 @command(names=['volume', 'vol'])
 def volume():
     print(get_volume(get_default_client()))
-
-
-@command()
-def playpause():
-    client = get_default_client()
-    if state(client) == 'stop':
-        play(client)
-    else:
-        pause(client)
-
-
-@command()
-def current():
-    print(fmtsong(get_default_client().currentsong()))
-
-
-@exception_converter(CommandError,
-                     'No files found in database matching: {args[1]}',
-                     ValueError)
-def add_to(client, song):
-    client.add(song)
-
-
-@command()
-def replace(what: Arg(type=str, help='What to replace.')):
-    client = get_default_client()
-    client.clear()
-    add_to(client, what)
-    client.play()
-
-
-@command()
-def add(what: Arg(type=str, help='What to add.')):
-    add_to(get_default_client(), what)
 
 
 @command()
@@ -104,7 +106,3 @@ def volumestep(
         client.setvol(get_volume(client) + step)
     except CommandError:
         pass
-
-@command()
-def update():
-    get_default_client().update()
