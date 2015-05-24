@@ -17,18 +17,18 @@ def get_volume(client):
 
 
 @command()
-def play():
-    get_default_client().play()
+def add(what: Arg(type=str, help='What to add.')):
+    add_to(get_default_client(), what)
 
 
 @command()
-def pause():
-    get_default_client().pause()
+def clear(_):
+    get_default_client().clear()
 
 
 @command()
-def stop():
-    get_default_client().stop()
+def current():
+    print(fmtsong(get_default_client().currentsong()))
 
 
 @command(names=['next'])
@@ -37,13 +37,35 @@ def next_song():
 
 
 @command()
+def pause():
+    get_default_client().pause()
+
+
+@command()
+def play():
+    get_default_client().play()
+
+
+@command()
+def playpause():
+    client = get_default_client()
+    if state(client) == 'stop':
+        play(client)
+    else:
+        pause(client)
+
+
+@command()
 def prev():
     get_default_client().previous()
 
 
 @command()
-def clear(_):
-    get_default_client().clear()
+def replace(what: Arg(type=str, help='What to replace.')):
+    client = get_default_client()
+    client.clear()
+    add_to(client, what)
+    client.play()
 
 
 @command()
@@ -58,36 +80,19 @@ def state():
     return get_default_client().status()['state']
 
 
+@command()
+def stop():
+    get_default_client().stop()
+
+
+@command()
+def update():
+    get_default_client().update()
+
+
 @command(names=['volume', 'vol'])
 def volume():
     print(get_volume(get_default_client()))
-
-
-@command()
-def playpause():
-    client = get_default_client()
-    if state(client) == 'stop':
-        play(client)
-    else:
-        pause(client)
-
-
-@command()
-def current():
-    print(fmtsong(get_default_client().currentsong()))
-
-
-@command()
-def replace(what: Arg(type=str, help='What to replace.')):
-    client = get_default_client()
-    client.clear()
-    add_to(client, what)
-    client.play()
-
-
-@command()
-def add(what: Arg(type=str, help='What to add.')):
-    add_to(get_default_client(), what)
 
 
 @command()
@@ -100,8 +105,3 @@ def volumestep(
         client.setvol(get_volume(client) + step)
     except CommandError:
         pass
-
-
-@command()
-def update():
-    get_default_client().update()
