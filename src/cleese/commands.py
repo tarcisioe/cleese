@@ -18,7 +18,10 @@ def get_volume(client):
 
 @command()
 def add(what: Arg(type=str, help='What to add.')):
-    add_to(get_default_client(), what)
+    try:
+        add_to(get_default_client(), what)
+    except ValueError as e:
+        print(e)
 
 
 @command()
@@ -61,10 +64,9 @@ def prev():
 
 @command()
 def replace(what: Arg(type=str, help='What to replace.')):
-    client = get_default_client()
-    client.clear()
-    add_to(client, what)
-    client.play()
+    clear()
+    add(what)
+    play()
 
 
 @command()
