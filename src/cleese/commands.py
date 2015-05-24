@@ -7,7 +7,7 @@ from cleese.utils import exception_converter, printer, fmtsong
 
 @exception_converter(CommandError,
                      'No files found in database matching: {args[1]}',
-                     ValueError)
+                     FileNotFoundError)
 def add_to(client, song):
     client.add(song)
 
@@ -20,7 +20,7 @@ def get_volume(client):
 def add(what: Arg(type=str, help='What to add.')):
     try:
         add_to(get_default_client(), what)
-    except ValueError as e:
+    except FileNotFoundError as e:
         print(e)
 
 
