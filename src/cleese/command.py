@@ -1,3 +1,6 @@
+import sys
+from os.path import basename
+
 _commands = []
 
 
@@ -21,7 +24,8 @@ class SubCommand:
             parser.add_argument(name, *(arg.args), **(arg.kwargs))
 
         def call(args):
-            arg_dict = {name: getattr(args, name) for name, _ in self.arg_format}
+            arg_dict = {name: getattr(args, name)
+                        for name, _ in self.arg_format}
             self.function(**arg_dict)
 
         parser.set_defaults(command=call)
@@ -52,3 +56,8 @@ def command_names():
 def attach_all(subparsers):
     for command in _commands:
         command.attach(subparsers)
+
+
+def fail(message, name=basename(sys.argv[0]), retval=-1):
+    print('{}: {}'.format(name, message), file=sys.stderr)
+    sys.exit(retval)

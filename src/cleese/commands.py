@@ -1,15 +1,19 @@
 from mpd import CommandError
 
 from cleese.clients import get_default_client
-from cleese.command import command, Arg
+from cleese.command import command, Arg, fail
 from cleese.utils import exception_converter, printer, fmtsong
 
 
 @exception_converter(CommandError,
-                     'No files found in database matching: {args[1]}',
+                     'no files found in database matching: {args[1]}',
                      FileNotFoundError)
 def add_to(client, song):
     client.add(song)
+
+
+def current_song():
+    return get_default_client().currentsong()
 
 
 @command()
@@ -17,7 +21,7 @@ def add(what: Arg(type=str, help='What to add.')):
     try:
         add_to(get_default_client(), what)
     except FileNotFoundError as e:
-        print(e)
+        fail(e)
 
 
 @command()
@@ -25,9 +29,12 @@ def clear():
     get_default_client().clear()
 
 
-@command()
+@command(wrapper=printer)
 def current():
-    print(fmtsong(get_default_client().currentsong()))
+    try:
+        return fmtsong(current_song())
+    except:
+        fail('no song playing.')
 
 
 @command(names=['next'])
@@ -97,10 +104,10 @@ def volumestep(
         step: Arg(type=int,
                   help='Step in which to modify volume, positive or negative.')
         ):
-    new = volume() + step
-    new = min(max(0, new), 100)  # clip value between 0 and 100
+    attempt = volume() + step
+    new = min(max(0, attempt), 100)  # clip value between 0 and 100
 
     try:
         setvolume(new)
     except CommandError:
-        pass
+        fail('cannot set volume outside range 0-100. attempt: {}'.format(attempt))
