@@ -110,4 +110,5 @@ def volumestep(
     try:
         setvolume(new)
     except CommandError:
-        fail('cannot set volume outside range 0-100. attempt: {}'.format(attempt))
+        fail('cannot set volume outside range 0-100.'
+             ' attempt: {}'.format(attempt))
