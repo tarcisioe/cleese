@@ -1,19 +1,19 @@
 from mpd import CommandError
 
 from cleese.clients import get_default_client
-from cleese.command import command, Arg
+from cleese.command import command, Arg, fail
 from cleese.utils import exception_converter, printer, fmtsong
 
 
 @exception_converter(CommandError,
-                     'No files found in database matching: {args[1]}',
+                     'no files found in database matching: {args[1]}',
                      FileNotFoundError)
 def add_to(client, song):
     client.add(song)
 
 
-def get_volume(client):
-    return int(client.status()['volume'])
+def current_song():
+    return get_default_client().currentsong()
 
 
 @command()
@@ -21,7 +21,7 @@ def add(what: Arg(type=str, help='What to add.')):
     try:
         add_to(get_default_client(), what)
     except FileNotFoundError as e:
-        print(e)
+        fail(e)
 
 
 @command()
@@ -29,9 +29,12 @@ def clear():
     get_default_client().clear()
 
 
-@command()
+@command(wrapper=printer)
 def current():
-    print(fmtsong(get_default_client().currentsong()))
+    try:
+        return fmtsong(current_song())
+    except:
+        fail('no song playing.')
 
 
 @command(names=['next'])
@@ -72,7 +75,7 @@ def replace(what: Arg(type=str, help='What to replace.')):
 @command()
 def setvolume(
         volume: Arg(type=int, help='A volume value between 0 and 100.')
-):
+        ):
     get_default_client().setvol(volume)
 
 
@@ -91,18 +94,36 @@ def update():
     get_default_client().update()
 
 
-@command(names=['volume', 'vol'])
+@command(names=['volume', 'vol'], wrapper=printer)
 def volume():
-    print(get_volume(get_default_client()))
+    return int(get_default_client().status()['volume'])
+
+
+@command()
+def playlist():
+    playlist = get_default_client().playlistinfo()
+    current_idx = current_song()['pos']
+
+    songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
+             for s in playlist]
+
+    width = len(str(len(songs)))
+
+    lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
+             for i, (name, marker) in enumerate(songs, 1))
+    print('\n'.join(lines))
 
 
 @command()
 def volumestep(
         step: Arg(type=int,
                   help='Step in which to modify volume, positive or negative.')
-):
-    client = get_default_client()
+        ):
+    attempt = volume() + step
+    new = min(max(0, attempt), 100)  # clip value between 0 and 100
+
     try:
-        client.setvol(get_volume(client) + step)
+        setvolume(new)
     except CommandError:
-        pass
+        fail('cannot set volume outside range 0-100.'
+             ' attempt: {}'.format(attempt))

@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='cleese',
-    version='0.6',
+    version='0.7',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     entry_points={
-        'console_scripts' : [
+        'console_scripts': [
             'cleese = cleese.__main__:run',
         ],
     },

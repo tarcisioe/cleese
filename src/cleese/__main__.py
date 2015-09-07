@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 import sys
 
-from argparse import ArgumentParser, REMAINDER, SUPPRESS
+from argparse import ArgumentParser
 
-from mpd import MPDClient
-
-from cleese.command import attach_all
+from cleese.command import attach_all, fail
 
 
 def main(arguments):
@@ -23,7 +21,7 @@ def main(arguments):
         arg_parser.print_usage()
         exit(1)
     except ConnectionRefusedError:
-        print("Cannot connect to mpd server")
+        fail("cannot connect to mpd server")
         exit(1)
 
 
