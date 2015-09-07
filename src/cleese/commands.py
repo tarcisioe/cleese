@@ -100,6 +100,21 @@ def volume():
 
 
 @command()
+def playlist():
+    playlist = get_default_client().playlistinfo()
+    current_idx = current_song()['pos']
+
+    songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
+             for s in playlist]
+
+    width = len(str(len(songs)))
+
+    lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
+             for i, (name, marker) in enumerate(songs, 1))
+    print('\n'.join(lines))
+
+
+@command()
 def volumestep(
         step: Arg(type=int,
                   help='Step in which to modify volume, positive or negative.')
