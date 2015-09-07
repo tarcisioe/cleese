@@ -12,10 +12,6 @@ def add_to(client, song):
     client.add(song)
 
 
-def get_volume(client):
-    return int(client.status()['volume'])
-
-
 @command()
 def add(what: Arg(type=str, help='What to add.')):
     try:
@@ -72,7 +68,7 @@ def replace(what: Arg(type=str, help='What to replace.')):
 @command()
 def setvolume(
         volume: Arg(type=int, help='A volume value between 0 and 100.')
-):
+        ):
     get_default_client().setvol(volume)
 
 
@@ -91,18 +87,20 @@ def update():
     get_default_client().update()
 
 
-@command(names=['volume', 'vol'])
+@command(names=['volume', 'vol'], wrapper=printer)
 def volume():
-    print(get_volume(get_default_client()))
+    return int(get_default_client().status()['volume'])
 
 
 @command()
 def volumestep(
         step: Arg(type=int,
                   help='Step in which to modify volume, positive or negative.')
-):
-    client = get_default_client()
+        ):
+    new = volume() + step
+    new = min(max(0, new), 100)  # clip value between 0 and 100
+
     try:
-        client.setvol(get_volume(client) + step)
+        setvolume(new)
     except CommandError:
         pass

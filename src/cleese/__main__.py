@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 import sys
 
-from argparse import ArgumentParser, REMAINDER, SUPPRESS
-
-from mpd import MPDClient
+from argparse import ArgumentParser
 
 from cleese.command import attach_all
+
+
+def fail(message):
+    print('{}: {}'.format(sys.argv[0], message), file=sys.stderr)
 
 
 def main(arguments):
@@ -23,7 +25,7 @@ def main(arguments):
         arg_parser.print_usage()
         exit(1)
     except ConnectionRefusedError:
-        print("Cannot connect to mpd server")
+        fail("Cannot connect to mpd server")
         exit(1)
 
 
