@@ -1,7 +1,7 @@
 from mpd import CommandError
 
 from cleese.clients import get_default_client
-from cleese.command import command, Arg, fail
+from cleese.command import command, Arg, fail, command_names
 from cleese.utils import exception_converter, printer, fmtsong
 
 
@@ -19,7 +19,7 @@ def current_song():
 @command()
 def add(what: Arg(type=str, help='What to add.')):
     try:
-        add_to(get_default_client(), what)
+        add_to(get_default_client(), what.rstrip('/'))
     except FileNotFoundError as e:
         fail(e)
 
@@ -37,7 +37,7 @@ def current():
         fail('no song playing.')
 
 
-@command(names=['next'])
+@command(names=('next',))
 def next_song():
     get_default_client().next()
 
@@ -94,7 +94,7 @@ def update():
     get_default_client().update()
 
 
-@command(names=['volume', 'vol'], wrapper=printer)
+@command(names=('volume', 'vol'), wrapper=printer)
 def volume():
     return int(get_default_client().status()['volume'])
 
@@ -127,3 +127,19 @@ def volumestep(
     except CommandError:
         fail('cannot set volume outside range 0-100.'
              ' attempt: {}'.format(attempt))
+
+
+@command(names=('prefix-search',))
+def prefix_search(prefix: Arg(type=str,
+                              help='Prefix to search for.')):
+    files = get_default_client().search('file', '')
+    files = [song['file'] for song in files if song['file'].startswith(prefix)]
+
+    for completion in files:  # compute_autocomplete(prefix, files):
+        print(completion)
+
+
+@command()
+def commands():
+    for name in command_names():
+        print(name)
