@@ -1,0 +1,47 @@
+_path_like_comp()
+{
+    # This forces readline to only display the last item separated by a slash
+    compopt -o filenames
+
+    local IFS=$'\n'
+    local k="${#COMPREPLY[@]}"
+
+    for path in $(compgen -W "$1" -- $2)
+    do
+        path="${path#${2}}"/
+        trailing="${path#*/}"
+        trailing="${trailing%/}"
+        path="${path%/}"
+        path="${path%%"${trailing}"}"
+
+        [[ -n "$trailing" ]] && compopt -o nospace
+
+        COMPREPLY[k++]="${2}${path}"
+    done
+}
+
+_cleese() {
+    local cur=${COMP_WORDS[COMP_CWORD]}
+
+    if [ ${#COMP_WORDS[@]} == 2 ]
+    then
+        COMPREPLY=($(compgen -W "$(cleese commands)" -- $cur))
+        return 0
+    fi
+
+    case ${COMP_WORDS[1]} in
+        replace) ;&
+        add)
+            if [[ $COMP_CWORD == 2 ]]
+            then
+                read prefix <<< ${cur#'"'}
+                prefix="${prefix%'"'}"
+                possibilities="$(cleese prefix-search "$prefix")"
+                _path_like_comp "$possibilities" "$prefix" && return 0
+            fi
+            ;;
+    esac
+
+}
+
+complete -F _cleese cleese

@@ -1,7 +1,7 @@
 import sys
 from os.path import basename
 
-_commands = []
+_commands = {}
 
 
 class Arg:
@@ -31,30 +31,28 @@ class SubCommand:
         parser.set_defaults(command=call)
 
 
-def command(names=[], wrapper=None):
+def command(names=(), wrapper=None):
     def inner(f):
         function = wrapper(f) if wrapper else f
 
-        names_list = [f.__name__] if not names else names
+        names_tuple = (f.__name__,) if not names else names
 
         arg_format = f.__annotations__.items()
 
-        _commands.append(SubCommand(names_list, arg_format, function))
+        _commands[names_tuple] = (SubCommand(names_tuple,
+                                             arg_format,
+                                             function))
 
         return f
     return inner
 
 
-def get_command(name):
-    return _commands[name]
-
-
 def command_names():
-    return _commands.keys()
+    return sorted([name for names in _commands for name in names])
 
 
 def attach_all(subparsers):
-    for command in _commands:
+    for command in _commands.values():
         command.attach(subparsers)
 
 

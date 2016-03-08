@@ -21,8 +21,9 @@ def exception_converter(exception_type,
 
 
 def printer(function):
-    def print_return(*args):
-        print(function(*args))
+    @wraps(function)
+    def print_return(*args, **kwargs):
+        print(function(*args, **kwargs))
     return print_return
 
 
