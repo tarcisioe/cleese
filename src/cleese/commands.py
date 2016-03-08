@@ -143,3 +143,13 @@ def prefix_search(prefix: Arg(type=str,
 def commands():
     for name in command_names():
         print(name)
+
+
+@command(wrapper=printer)
+def elapsed():
+    client = get_default_client()
+    current_time = int(float(client.status()['elapsed']))
+    total_time = int(current_song()['time'])
+    cm, cs = divmod(current_time, 60)
+    tm, ts = divmod(total_time, 60)
+    return '{}:{:02}/{}:{:02}'.format(cm, cs, tm, ts)
