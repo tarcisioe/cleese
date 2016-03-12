@@ -1,55 +1,72 @@
-from mpd import CommandError
+from mpd import MPDClient, CommandError
 
-from cleese.clients import get_default_client
+from cleese.clients import connected
 from cleese.command import command, Arg, fail, command_names
 from cleese.utils import exception_converter, printer, fmtsong
+
+
+client = MPDClient()
 
 
 @exception_converter(CommandError,
                      'no files found in database matching: {args[1]}',
                      FileNotFoundError)
 def add_to(client, song):
-    client.add(song)
+    client.add(song.rstrip('/'))
 
 
 def current_song():
-    return get_default_client().currentsong()
+    with connected(client):
+        return client.currentsong()
+
+
+def fmt_current_song():
+    try:
+        return fmtsong(current_song())
+    except KeyError:
+        return ''
 
 
 @command()
 def add(what: Arg(type=str, help='What to add.')):
     try:
-        add_to(get_default_client(), what.rstrip('/'))
+        with connected(client):
+            add_to(client, what)
     except FileNotFoundError as e:
         fail(e)
 
 
 @command()
 def clear():
-    get_default_client().clear()
+    with connected(client):
+        client.clear()
 
 
 @command(wrapper=printer)
 def current():
-    try:
-        return fmtsong(current_song())
-    except:
+    song = fmt_current_song()
+    if song:
+        return song
+    else:
         fail('no song playing.')
 
 
 @command(names=('next',))
 def next_song():
-    get_default_client().next()
+    with connected(client):
+        client.next()
 
 
 @command()
 def pause():
-    get_default_client().pause()
+    with connected(client):
+        client.pause()
 
 
 @command()
 def play():
-    get_default_client().play()
+    with connected(client):
+        client.play()
 
 
 @command()
@@ -62,7 +79,8 @@ def playpause():
 
 @command()
 def prev():
-    get_default_client().previous()
+    with connected(client):
+        client.previous()
 
 
 @command()
@@ -76,32 +94,38 @@ def replace(what: Arg(type=str, help='What to replace.')):
 def setvolume(
         volume: Arg(type=int, help='A volume value between 0 and 100.')
         ):
-    get_default_client().setvol(volume)
+    with connected(client):
+        client.setvol(volume)
 
 
 @command(wrapper=printer)
 def state():
-    return get_default_client().status()['state']
+    with connected(client):
+        return client.status()['state']
 
 
 @command()
 def stop():
-    get_default_client().stop()
+    with connected(client):
+        client.stop()
 
 
 @command()
 def update():
-    get_default_client().update()
+    with connected(client):
+        client.update()
 
 
 @command(names=('volume', 'vol'), wrapper=printer)
 def volume():
-    return int(get_default_client().status()['volume'])
+    with connected(client):
+        return int(client.status()['volume'])
 
 
 @command()
 def playlist():
-    playlist = get_default_client().playlistinfo()
+    with connected(client):
+        playlist = client.playlistinfo()
     current_idx = current_song()['pos']
 
     songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
@@ -132,7 +156,8 @@ def volumestep(
 @command(names=('prefix-search',))
 def prefix_search(prefix: Arg(type=str,
                               help='Prefix to search for.')):
-    files = get_default_client().search('file', '')
+    with connected(client):
+        files = client.search('file', '')
     files = [song['file'] for song in files if song['file'].startswith(prefix)]
 
     for completion in files:  # compute_autocomplete(prefix, files):
@@ -147,8 +172,8 @@ def commands():
 
 @command(wrapper=printer)
 def elapsed():
-    client = get_default_client()
-    current_time = int(float(client.status()['elapsed']))
+    with connected(client):
+        current_time = int(float(client.status()['elapsed']))
     total_time = int(current_song()['time'])
     cm, cs = divmod(current_time, 60)
     tm, ts = divmod(total_time, 60)

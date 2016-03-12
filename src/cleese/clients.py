@@ -1,39 +1,33 @@
+from contextlib import contextmanager
 from functools import lru_cache
-
-from mpd import MPDClient
 
 from cleese.config import read_config
 
 
-_default_client = None
-
-
 @lru_cache()
-def get_client(server_name):
+def from_config(server_name):
     configs = read_config()
     address = configs['servers:' + server_name]['address']
     port = int(configs['servers:' + server_name]['port'])
 
-    client = MPDClient()
-    client.connect(address, port)
-
-    return client
+    return address, port
 
 
-def get_default_client():
-    if _default_client is not None:
-        return _default_client
-
+def get_default_server():
     try:
-        default = get_client('default')
+        default = from_config('default')
     except KeyError:
-        default = standard_mpd_client()
+        default = ('localhost', 6600)
 
     return default
 
 
-def standard_mpd_client():
-    client = MPDClient()
-    client.connect('localhost', 6600)
-
-    return client
+@contextmanager
+def connected(client, where=get_default_server()):
+    address, port = where
+    try:
+        client.connect(address, port)
+        yield
+    finally:
+        client.close()
+        client.disconnect()
