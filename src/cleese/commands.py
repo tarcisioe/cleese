@@ -27,6 +27,11 @@ def fmt_current_song():
         return ''
 
 
+def fmt_minutes(seconds):
+    m, s = divmod(seconds, 60)
+    return '{}:{:02}'.format(m, s)
+
+
 @command()
 def add(what: Arg(type=str, help='What to add.')):
     try:
@@ -175,9 +180,9 @@ def elapsed():
     with connected(client):
         current_time = int(float(client.status()['elapsed']))
     total_time = int(current_song()['time'])
-    cm, cs = divmod(current_time, 60)
-    tm, ts = divmod(total_time, 60)
-    return '{}:{:02}/{}:{:02}'.format(cm, cs, tm, ts)
+    current = fmt_minutes(current_time)
+    total = fmt_minutes(total_time)
+    return '{}/{}'.format(current, total)
 
 
 @command()
@@ -189,6 +194,15 @@ def goto(where: Arg(type=int,
 
 @command()
 def seek(step: Arg(type=int,
-                   help='How many seconds to advance or backtrack (negative for backtracking')):
+                   help='How many seconds to advance or backtrack.')):
     with connected(client):
         client.seekcur('{:+}'.format(step))
+
+
+@command(names=('total-time',), wrapper=printer)
+def total_time():
+    with connected(client):
+        playlist = client.playlistinfo()
+
+    total = sum(int(song['time']) for song in playlist)
+    return fmt_minutes(total)
