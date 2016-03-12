@@ -178,3 +178,17 @@ def elapsed():
     cm, cs = divmod(current_time, 60)
     tm, ts = divmod(total_time, 60)
     return '{}:{:02}/{}:{:02}'.format(cm, cs, tm, ts)
+
+
+@command()
+def goto(where: Arg(type=int,
+                    help='Point in song where to seek to (seconds).')):
+    with connected(client):
+        client.seekcur(where)
+
+
+@command()
+def seek(step: Arg(type=int,
+                   help='How many seconds to advance or backtrack (negative for backtracking')):
+    with connected(client):
+        client.seekcur('{:+}'.format(step))
