@@ -2,7 +2,7 @@ from mpd import MPDClient, CommandError
 
 from cleese.clients import connected
 from cleese.command import command, Arg, fail, command_names
-from cleese.utils import exception_converter, printer, fmtsong
+from cleese.utils import exception_converter, printer, fmtsong, fmt_minutes
 
 
 client = MPDClient()
@@ -11,44 +11,50 @@ client = MPDClient()
 @exception_converter(CommandError,
                      'no files found in database matching: {args[1]}',
                      FileNotFoundError)
-def add_to(client, song):
-    client.add(song.rstrip('/'))
+def _add(what):
+    '''Add a directory or a file from the library to a client's queue.
+
+    Args:
+        c (MPDClient): The client on which to add songs.
+        what (str): The directory or file to add to the queue.
+    '''
+    client.add(what.rstrip('/'))
 
 
 def current_song():
+    '''Get the current song from the default server.'''
     with connected(client):
         return client.currentsong()
 
 
 def fmt_current_song():
+    '''Get the current song, properly formatted.'''
     try:
         return fmtsong(current_song())
     except KeyError:
         return ''
 
 
-def fmt_minutes(seconds):
-    m, s = divmod(seconds, 60)
-    return '{}:{:02}'.format(m, s)
-
-
-@command()
-def add(what: Arg(type=str, help='What to add.')):
+@command
+def add(what: 'What to add.'):
+    '''Add a directory or file from library to the playing queue.'''
     try:
         with connected(client):
-            add_to(client, what)
+            _add(what.rstrip('/'))
     except FileNotFoundError as e:
         fail(e)
 
 
-@command()
+@command
 def clear():
+    '''Clear the playing queue.'''
     with connected(client):
         client.clear()
 
 
 @command(wrapper=printer)
 def current():
+    '''Get the current song.'''
     song = fmt_current_song()
     if song:
         return song
@@ -58,83 +64,94 @@ def current():
 
 @command(names=('next',))
 def next_song():
+    '''Go to next song in queue.'''
     with connected(client):
         client.next()
 
 
-@command()
+@command
 def pause():
+    '''Pause playback.'''
     with connected(client):
         client.pause()
 
 
-@command()
+@command
 def play():
+    '''Play playback.'''
     with connected(client):
         client.play()
 
 
-@command()
+@command
 def playpause():
+    '''Invert current playback state.'''
     if state() == 'stop':
         play()
     else:
         pause()
 
 
-@command()
+@command
 def prev():
+    '''Go to previous song in queue.'''
     with connected(client):
         client.previous()
 
 
-@command()
-def replace(what: Arg(type=str, help='What to replace.')):
+@command
+def replace(what: 'What to replace.'):
+    '''Replace the current queue by something.'''
     clear()
     add(what)
     play()
 
 
-@command()
-def setvolume(
-        volume: Arg(type=int, help='A volume value between 0 and 100.')
-        ):
+@command
+def setvolume(value: Arg(type=int,
+                         help='A volume value between 0 and 100.')):
+    '''Set the current volume.'''
     with connected(client):
-        client.setvol(volume)
+        client.setvol(value)
 
 
 @command(wrapper=printer)
 def state():
+    '''Get the current playback state (play, pause or stop).'''
     with connected(client):
         return client.status()['state']
 
 
-@command()
+@command
 def stop():
+    '''Stop playback.'''
     with connected(client):
         client.stop()
 
 
-@command()
+@command
 def update():
+    '''Update the server database.'''
     with connected(client):
         client.update()
 
 
 @command(names=('volume', 'vol'), wrapper=printer)
 def volume():
+    '''Get the current volume.'''
     with connected(client):
         return int(client.status()['volume'])
 
 
-@command()
+@command
 def playlist():
+    '''Print the current playlist.'''
     with connected(client):
-        playlist = client.playlistinfo()
+        songs = client.playlistinfo()
     current_idx = current_song()['pos']
 
     songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
-             for s in playlist]
+             for s in songs]
 
     width = len(str(len(songs)))
 
@@ -143,11 +160,12 @@ def playlist():
     print('\n'.join(lines))
 
 
-@command()
+@command
 def volumestep(
         step: Arg(type=int,
                   help='Step in which to modify volume, positive or negative.')
-        ):
+):
+    '''Set volume relative to current value.'''
     attempt = volume() + step
     new = min(max(0, attempt), 100)  # clip value between 0 and 100
 
@@ -159,8 +177,8 @@ def volumestep(
 
 
 @command(names=('prefix-search',))
-def prefix_search(prefix: Arg(type=str,
-                              help='Prefix to search for.')):
+def prefix_search(prefix: 'Prefix to search for.'):
+    '''Search database for a given prefix.'''
     with connected(client):
         files = client.search('file', '')
     files = [song['file'] for song in files if song['file'].startswith(prefix)]
@@ -169,40 +187,53 @@ def prefix_search(prefix: Arg(type=str,
         print(completion)
 
 
-@command()
+@command
 def commands():
+    '''Print all available commands.'''
     for name in command_names():
         print(name)
 
 
-@command(wrapper=printer)
-def elapsed():
+def seconds_elapsed():
+    '''Get the elapsed and total time of the current song.'''
     with connected(client):
         current_time = int(float(client.status()['elapsed']))
-    total_time = int(current_song()['time'])
-    current = fmt_minutes(current_time)
-    total = fmt_minutes(total_time)
-    return '{}/{}'.format(current, total)
+    total = int(current_song()['time'])
+
+    return current_time, total
 
 
-@command()
+@command(wrapper=printer)
+def elapsed(seconds: Arg(help='Show in seconds.', action='store_true')=False):
+    '''Get the elapsed time and total time, formatted.'''
+    current_time, total = seconds_elapsed()
+    if not seconds:
+        current_time = fmt_minutes(current_time)
+        total = fmt_minutes(total)
+    return '{}/{}'.format(current_time, total)
+
+
+@command
 def goto(where: Arg(type=int,
                     help='Point in song where to seek to (seconds).')):
+    '''Go to a specific point in the current song.'''
     with connected(client):
         client.seekcur(where)
 
 
-@command()
+@command
 def seek(step: Arg(type=int,
                    help='How many seconds to advance or backtrack.')):
+    '''Seek forward or backwards. Use negative values to seek backwards.'''
     with connected(client):
         client.seekcur('{:+}'.format(step))
 
 
 @command(names=('total-time',), wrapper=printer)
 def total_time():
+    '''Get the total time of the current queue.'''
     with connected(client):
-        playlist = client.playlistinfo()
+        songs = client.playlistinfo()
 
-    total = sum(int(song['time']) for song in playlist)
+    total = sum(int(song['time']) for song in songs)
     return fmt_minutes(total)
