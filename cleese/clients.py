@@ -1,5 +1,7 @@
+from collections import defaultdict
 from contextlib import contextmanager
 from functools import lru_cache
+from threading import Lock
 
 from cleese.config import read_config
 
@@ -22,12 +24,16 @@ def get_default_server():
     return default
 
 
+locks = defaultdict(Lock)
+
+
 @contextmanager
 def connected(client, where=get_default_server()):
     address, port = where
-    try:
-        client.connect(address, port)
-        yield
-    finally:
-        client.close()
-        client.disconnect()
+    with locks[id(client)]:
+        try:
+            client.connect(address, port)
+            yield
+        finally:
+            client.close()
+            client.disconnect()
