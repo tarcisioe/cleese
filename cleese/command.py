@@ -1,9 +1,10 @@
 import sys
+from collections import OrderedDict
 from functools import wraps
 from os.path import basename
 from inspect import signature, Signature
 
-_commands = {}
+_commands = OrderedDict()
 
 
 def empty_args(f):

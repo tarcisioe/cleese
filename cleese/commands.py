@@ -52,6 +52,13 @@ def clear():
         client.clear()
 
 
+@command
+def commands():
+    '''Print all available commands.'''
+    for name in command_names():
+        print(name)
+
+
 @command(wrapper=printer)
 def current():
     '''Get the current song.'''
@@ -60,6 +67,24 @@ def current():
         return song
     else:
         fail('no song playing.')
+
+
+@command(wrapper=printer)
+def elapsed(seconds: Arg(help='Show in seconds.', action='store_true')=False):
+    '''Get the elapsed time and total time, formatted.'''
+    current_time, total = seconds_elapsed()
+    if not seconds:
+        current_time = fmt_minutes(current_time)
+        total = fmt_minutes(total)
+    return '{}/{}'.format(current_time, total)
+
+
+@command
+def goto(where: Arg(type=int,
+                    help='Point in song where to seek to (seconds).')):
+    '''Go to a specific point in the current song.'''
+    with connected(client):
+        client.seekcur(where)
 
 
 @command(names=('next',))
@@ -84,12 +109,40 @@ def play():
 
 
 @command
+def playlist():
+    '''Print the current playlist.'''
+    with connected(client):
+        songs = client.playlistinfo()
+    current_idx = current_song()['pos']
+
+    songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
+             for s in songs]
+
+    width = len(str(len(songs)))
+
+    lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
+             for i, (name, marker) in enumerate(songs, 1))
+    print('\n'.join(lines))
+
+
+@command
 def playpause():
     '''Invert current playback state.'''
     if state() == 'stop':
         play()
     else:
         pause()
+
+
+@command(names=('prefix-search',))
+def prefix_search(prefix: 'Prefix to search for.'):
+    '''Search database for a given prefix.'''
+    with connected(client):
+        files = client.search('file', '')
+    files = [song['file'] for song in files if song['file'].startswith(prefix)]
+
+    for completion in files:  # compute_autocomplete(prefix, files):
+        print(completion)
 
 
 @command
@@ -105,6 +158,14 @@ def replace(what: 'What to replace.'):
     clear()
     add(what)
     play()
+
+
+@command
+def seek(step: Arg(type=int,
+                   help='How many seconds to advance or backtrack.')):
+    '''Seek forward or backwards. Use negative values to seek backwards.'''
+    with connected(client):
+        client.seekcur('{:+}'.format(step))
 
 
 @command
@@ -129,6 +190,16 @@ def stop():
         client.stop()
 
 
+@command(names=('total-time',), wrapper=printer)
+def total_time():
+    '''Get the total time of the current queue.'''
+    with connected(client):
+        songs = client.playlistinfo()
+
+    total = sum(int(song['time']) for song in songs)
+    return fmt_minutes(total)
+
+
 @command
 def update():
     '''Update the server database.'''
@@ -136,28 +207,11 @@ def update():
         client.update()
 
 
-@command(names=('volume', 'vol'), wrapper=printer)
+@command(names=('vol', 'volume'), wrapper=printer)
 def volume():
     '''Get the current volume.'''
     with connected(client):
         return int(client.status()['volume'])
-
-
-@command
-def playlist():
-    '''Print the current playlist.'''
-    with connected(client):
-        songs = client.playlistinfo()
-    current_idx = current_song()['pos']
-
-    songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
-             for s in songs]
-
-    width = len(str(len(songs)))
-
-    lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
-             for i, (name, marker) in enumerate(songs, 1))
-    print('\n'.join(lines))
 
 
 @command
@@ -176,24 +230,6 @@ def volumestep(
              ' attempt: {}'.format(attempt))
 
 
-@command(names=('prefix-search',))
-def prefix_search(prefix: 'Prefix to search for.'):
-    '''Search database for a given prefix.'''
-    with connected(client):
-        files = client.search('file', '')
-    files = [song['file'] for song in files if song['file'].startswith(prefix)]
-
-    for completion in files:  # compute_autocomplete(prefix, files):
-        print(completion)
-
-
-@command
-def commands():
-    '''Print all available commands.'''
-    for name in command_names():
-        print(name)
-
-
 def seconds_elapsed():
     '''Get the elapsed and total time of the current song.'''
     with connected(client):
@@ -201,39 +237,3 @@ def seconds_elapsed():
     total = int(current_song()['time'])
 
     return current_time, total
-
-
-@command(wrapper=printer)
-def elapsed(seconds: Arg(help='Show in seconds.', action='store_true')=False):
-    '''Get the elapsed time and total time, formatted.'''
-    current_time, total = seconds_elapsed()
-    if not seconds:
-        current_time = fmt_minutes(current_time)
-        total = fmt_minutes(total)
-    return '{}/{}'.format(current_time, total)
-
-
-@command
-def goto(where: Arg(type=int,
-                    help='Point in song where to seek to (seconds).')):
-    '''Go to a specific point in the current song.'''
-    with connected(client):
-        client.seekcur(where)
-
-
-@command
-def seek(step: Arg(type=int,
-                   help='How many seconds to advance or backtrack.')):
-    '''Seek forward or backwards. Use negative values to seek backwards.'''
-    with connected(client):
-        client.seekcur('{:+}'.format(step))
-
-
-@command(names=('total-time',), wrapper=printer)
-def total_time():
-    '''Get the total time of the current queue.'''
-    with connected(client):
-        songs = client.playlistinfo()
-
-    total = sum(int(song['time']) for song in songs)
-    return fmt_minutes(total)
