@@ -28,4 +28,18 @@ def printer(function):
 
 
 def fmtsong(songdata):
-    return('/'.join(songdata[i] for i in ('artist', 'album', 'title')))
+    '''Format song artist, album and title data.'''
+    return '/'.join(songdata[i] for i in ('artist', 'album', 'title'))
+
+
+def fmt_minutes(seconds):
+    '''Format seconds as minutes and seconds.
+
+    Args:
+        seconds (int): The number of seconds.
+
+    Returns:
+        str: The value formatted as `mm:ss`.
+    '''
+    m, s = divmod(seconds, 60)
+    return '{}:{:02}'.format(m, s)
