@@ -27,6 +27,16 @@ def printer(function):
     return print_return
 
 
+def line_list_printer(function):
+    from functools import wraps
+
+    @wraps(function)
+    def print_return(*args, **kwargs):
+        for line in function(*args, **kwargs):
+            print(line)
+    return print_return
+
+
 def fmtsong(songdata):
     '''Format song artist, album and title data.'''
     return '/'.join(songdata[i] for i in ('artist', 'album', 'title'))
