@@ -116,7 +116,7 @@ def play():
         client.play()
 
 
-@command
+@command(wrapper=printer)
 def playlist():
     '''Print the current playlist.'''
     with connected(client):
@@ -130,7 +130,7 @@ def playlist():
 
     lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
              for i, (name, marker) in enumerate(songs, 1))
-    print('\n'.join(lines))
+    return '\n'.join(lines)
 
 
 @command
