@@ -2,7 +2,8 @@ from mpd import MPDClient, CommandError
 
 from cleese.clients import connected
 from cleese.command import command, Arg, fail, command_names
-from cleese.utils import exception_converter, printer, fmtsong, fmt_minutes
+from cleese.utils import (exception_converter, fmt_minutes, fmtsong,
+                          line_list_printer, printer)
 
 
 client = MPDClient()
@@ -52,11 +53,10 @@ def clear():
         client.clear()
 
 
-@command
+@command(wrapper=line_list_printer)
 def commands():
     '''Print all available commands.'''
-    for name in command_names():
-        print(name)
+    return command_names()
 
 
 @command(wrapper=printer)
@@ -87,6 +87,14 @@ def goto(where: Arg(type=int,
         client.seekcur(where)
 
 
+@command(wrapper=line_list_printer)
+def idle():
+    '''Waits for the server to signal any events.'''
+    idle_client = MPDClient()
+    with connected(idle_client):
+        return idle_client.idle()
+
+
 @command(names=('next',))
 def next_song():
     '''Go to next song in queue.'''
@@ -108,7 +116,7 @@ def play():
         client.play()
 
 
-@command
+@command(wrapper=printer)
 def playlist():
     '''Print the current playlist.'''
     with connected(client):
@@ -122,7 +130,7 @@ def playlist():
 
     lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
              for i, (name, marker) in enumerate(songs, 1))
-    print('\n'.join(lines))
+    return '\n'.join(lines)
 
 
 @command
@@ -134,15 +142,14 @@ def playpause():
         pause()
 
 
-@command(names=('prefix-search',))
+@command(names=('prefix-search',), wrapper=line_list_printer)
 def prefix_search(prefix: 'Prefix to search for.'):
     '''Search database for a given prefix.'''
     with connected(client):
         files = client.search('file', '')
     files = [song['file'] for song in files if song['file'].startswith(prefix)]
 
-    for completion in files:  # compute_autocomplete(prefix, files):
-        print(completion)
+    return files
 
 
 @command
