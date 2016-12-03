@@ -21,27 +21,49 @@ _path_like_comp()
 }
 
 _cleese() {
-    local cur=${COMP_WORDS[COMP_CWORD]}
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local address port
 
-    if [ ${#COMP_WORDS[@]} == 2 ]
+    opts="--address --port"
+
+    if [[ ${cur} == -* ]]
     then
-        COMPREPLY=($(compgen -W "$(cleese commands)" -- $cur))
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
         return 0
     fi
 
-    case ${COMP_WORDS[1]} in
+    for i in "${!COMP_WORDS[@]}"
+    do
+        if [[ ${COMP_WORDS[$i]} == --address ]]
+        then
+            address=${COMP_WORDS[$i+1]}
+        elif [[ ${COMP_WORDS[$i]} == --port ]]
+        then
+            port=${COMP_WORDS[$i+1]}
+        fi
+    done
+
+    [[ $address == "" ]] && address='localhost'
+    [[ $port == "" ]] && port=6600
+
+    case ${prev} in
+        --address) ;&
+        --port)
+            return 0
+            ;;
         replace) ;&
         add)
-            if [[ $COMP_CWORD == 2 ]]
-            then
-                read prefix <<< ${cur#'"'}
-                prefix="${prefix%'"'}"
-                possibilities="$(cleese prefix-search "$prefix")"
-                _path_like_comp "$possibilities" "$prefix" && return 0
-            fi
+            read prefix <<< ${cur#'"'}
+            prefix="${prefix%'"'}"
+            possibilities="$(cleese --address $address --port $port \
+                             prefix-search "$prefix" 2> /dev/null)"
+            _path_like_comp "$possibilities" "$prefix" && return 0
+            return 0
             ;;
     esac
 
+    COMPREPLY=($(compgen -W "$(cleese commands)" -- $cur))
 }
 
 complete -F _cleese cleese
