@@ -6,7 +6,7 @@ from cleese.clients import get_default_client, Client
 @command
 def main(address: 'Address to connect to.'=None,
          port: Arg(type=int, help='Port to connect to.')=None,
-         subcommand=STOP | REQUIRED):
+         subcommand=(STOP | REQUIRED)):
     '''An MPD client written in Python.'''
 
     if address is None and port is None:

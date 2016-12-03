@@ -15,7 +15,7 @@ def _add(client, what):
     '''Add a directory or a file from the library to a client's queue.
 
     Args:
-        c (MPDClient): The client on which to add songs.
+        c (Client): The client on which to add songs.
         what (str): The directory or file to add to the queue.
     '''
     client.add(what.rstrip('/'))
