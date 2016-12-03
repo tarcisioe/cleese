@@ -1,7 +1,8 @@
 import sys
 
-from functools import wraps
 from os.path import basename
+
+from wrapt import decorator
 
 
 def exception_converter(exception_type,
@@ -9,33 +10,32 @@ def exception_converter(exception_type,
                         new_exception_type=None):
     if new_exception_type is None:
         new_exception_type = exception_type
+    '''Make a decorator to convert between exception types.'''
 
-    def exception_converter_inner(f):
-        @wraps(f)
-        def rethrower(*args):
-            try:
-                retval = f(*args)
-            except exception_type as e:
-                raise new_exception_type(message.format(args=args)) from e
-            else:
-                return retval
-        return rethrower
-    return exception_converter_inner
-
-
-def printer(function):
-    @wraps(function)
-    def print_return(*args, **kwargs):
-        print(function(*args, **kwargs))
-    return print_return
+    @decorator
+    def rethrower(f, _, args, kwargs):
+        '''Convert the requested exception type to the new exception type.'''
+        try:
+            retval = f(*args, **kwargs)
+        except exception_type as e:
+            raise new_exception_type(message.format(args=args,
+                                                    kwargs=kwargs)) from e
+        else:
+            return retval
+    return rethrower
 
 
-def line_list_printer(function):
-    @wraps(function)
-    def print_return(*args, **kwargs):
-        for line in function(*args, **kwargs):
-            print(line)
-    return print_return
+@decorator
+def printer(f, _, args, kwargs):
+    '''Print the return of a function f.'''
+    print(f(*args, **kwargs))
+
+
+@decorator
+def line_list_printer(f, _, args, kwargs):
+    '''Print the return of a function f as a list of lines.'''
+    for line in f(*args, **kwargs):
+        print(line)
 
 
 def fmtsong(songdata):
@@ -60,5 +60,6 @@ def fmt_minutes(seconds):
 
 
 def fail(message, name=basename(sys.argv[0]), retval=-1):
+    '''Exit with non-zero code printing a message to stderr.'''
     print('{}: {}'.format(name, message), file=sys.stderr)
     sys.exit(retval)
