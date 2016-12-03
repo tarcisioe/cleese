@@ -1,5 +1,7 @@
 from carl import command, Arg, STOP, REQUIRED
+from mpd import ConnectionError
 
+from .utils import fail
 from cleese.clients import get_default_client, Client
 
 
@@ -17,4 +19,7 @@ def main(address: 'Address to connect to.'=None,
         client = Client(address, port)
 
     cmd, args = subcommand
-    cmd.resume(args, client=client)
+    try:
+        cmd.resume(args, client=client)
+    except ConnectionError:
+        fail("Unable to connect to server.")
