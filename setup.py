@@ -10,5 +10,6 @@ setup(
     },
     install_requires=[
         'python-mpd2',
+        'carl',
     ],
 )

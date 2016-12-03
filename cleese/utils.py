@@ -1,4 +1,7 @@
+import sys
+
 from functools import wraps
+from os.path import basename
 
 
 def exception_converter(exception_type,
@@ -28,8 +31,6 @@ def printer(function):
 
 
 def line_list_printer(function):
-    from functools import wraps
-
     @wraps(function)
     def print_return(*args, **kwargs):
         for line in function(*args, **kwargs):
@@ -53,3 +54,8 @@ def fmt_minutes(seconds):
     '''
     m, s = divmod(seconds, 60)
     return '{}:{:02}'.format(m, s)
+
+
+def fail(message, name=basename(sys.argv[0]), retval=-1):
+    print('{}: {}'.format(name, message), file=sys.stderr)
+    sys.exit(retval)
