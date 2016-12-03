@@ -3,7 +3,19 @@ from contextlib import contextmanager
 from functools import lru_cache
 from threading import Lock
 
+from mpd import MPDClient
+
 from cleese.config import read_config
+
+
+class Client(MPDClient):
+    def __init__(self, address, port):
+        super().__init__()
+        self.address = address
+        self.port = port
+
+    def connect_default(self):
+        self.connect(self.address, self.port)
 
 
 @lru_cache()
@@ -15,24 +27,23 @@ def from_config(server_name):
     return address, port
 
 
-def get_default_server():
+def get_default_client():
     try:
-        default = from_config('default')
+        address, port = from_config('default')
     except KeyError:
-        default = ('localhost', 6600)
+        address, port = ('localhost', 6600)
 
-    return default
+    return Client(address, port)
 
 
 locks = defaultdict(Lock)
 
 
 @contextmanager
-def connected(client, where=get_default_server()):
-    address, port = where
+def connected(client):
     with locks[id(client)]:
         try:
-            client.connect(address, port)
+            client.connect_default()
             yield
         finally:
             client.close()
