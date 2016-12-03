@@ -40,7 +40,10 @@ def line_list_printer(function):
 
 def fmtsong(songdata):
     '''Format song artist, album and title data.'''
-    return '/'.join(songdata[i] for i in ('artist', 'album', 'title'))
+    artist = songdata.get('artist', '')
+    album = songdata.get('album', '')
+    title = songdata.get('title', '')
+    return '/'.join((artist, album, title))
 
 
 def fmt_minutes(seconds):

@@ -53,7 +53,7 @@ def clear(client: NotArg):
 
 
 @main.subcommand(wrapper=line_list_printer)
-def commands(_: NotArg):
+def commands(client: NotArg):  # pylint: disable=unused-argument
     '''Print all available commands.'''
     return main.subcommands
 
