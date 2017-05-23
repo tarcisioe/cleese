@@ -95,6 +95,13 @@ def idle(client: NotArg):
         return client.idle()
 
 
+@main.subcommand(wrapper=printer)
+def index(client: NotArg):
+    '''Print current song index on playlist.'''
+    with connected(client):
+        return int(client.currentsong()["pos"]) + 1
+
+
 @main.subcommand(names=('next',))
 def next_song(client: NotArg):
     '''Go to next song in queue.'''
