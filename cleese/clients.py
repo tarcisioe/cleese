@@ -24,16 +24,16 @@ def from_config(server_name):
     address = configs['servers:' + server_name]['address']
     port = int(configs['servers:' + server_name]['port'])
 
-    return address, port
+    return Client(address, port)
 
 
 def get_default_client():
     try:
-        address, port = from_config('default')
+        client = from_config('default')
     except (KeyError, FileNotFoundError):
-        address, port = ('localhost', 6600)
+        client = Client('localhost', 6600)
 
-    return Client(address, port)
+    return client
 
 
 locks = defaultdict(Lock)
