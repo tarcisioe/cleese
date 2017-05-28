@@ -30,7 +30,7 @@ def from_config(server_name):
 def get_default_client():
     try:
         address, port = from_config('default')
-    except KeyError:
+    except (KeyError, FileNotFoundError):
         address, port = ('localhost', 6600)
 
     return Client(address, port)
