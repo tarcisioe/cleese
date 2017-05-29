@@ -1,7 +1,4 @@
-from collections import defaultdict
 from contextlib import contextmanager
-from functools import lru_cache
-from threading import Lock
 
 from mpd import MPDClient
 
@@ -18,7 +15,6 @@ class Client(MPDClient):
         self.connect(self.address, self.port)
 
 
-@lru_cache()
 def from_config(server_name):
     configs = read_config()
     address = configs['servers:' + server_name]['address']
@@ -36,15 +32,11 @@ def get_default_client():
     return client
 
 
-locks = defaultdict(Lock)
-
-
 @contextmanager
 def connected(client):
-    with locks[id(client)]:
-        try:
-            client.connect_default()
-            yield
-        finally:
-            client.close()
-            client.disconnect()
+    try:
+        client.connect_default()
+        yield
+    finally:
+        client.close()
+        client.disconnect()
