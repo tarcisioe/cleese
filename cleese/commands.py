@@ -1,6 +1,7 @@
 from ampdup import MPDClient, MPDError, Song, URINotFoundError, State
 
-from cleese.utils import fail, fmt_minutes, fmtsong, line_list_printer, printer
+from cleese.utils import (enum_printer, fail, fmt_minutes, fmtsong,
+                          line_list_printer, printer)
 from cleese.main import main
 
 from carl import Arg, NotArg
@@ -183,7 +184,7 @@ async def setvolume(
     await client.setvol(value)
 
 
-@main.subcommand(wrapper=printer)
+@main.subcommand(wrapper=enum_printer)
 async def state(client: NotArg):
     '''Get the current playback state (play, pause or stop).'''
     return (await client.status()).state

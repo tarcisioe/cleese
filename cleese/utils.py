@@ -20,6 +20,12 @@ async def line_list_printer(f, _, args, kwargs):
         print(line)
 
 
+@decorator
+async def enum_printer(f, _, args, kwargs):
+    '''Print the return of a function f.'''
+    print((await f(*args, **kwargs)).value)
+
+
 def fmtsong(song: Song) -> str:
     '''Format song artist, album and title data.'''
     return '/'.join((song.artist, song.album, song.title))
