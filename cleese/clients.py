@@ -1,8 +1,6 @@
-from contextlib import contextmanager
-
 from ampdup import MPDClient
 
-from cleese.config import read_config
+from .config import read_config
 
 
 def from_config(server_name: str, factory=MPDClient):

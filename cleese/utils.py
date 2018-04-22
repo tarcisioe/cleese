@@ -1,8 +1,8 @@
 import sys
 
-from ampdup import Song
-
 from os.path import basename
+
+from ampdup import Song
 
 from wrapt import decorator
 
@@ -29,6 +29,7 @@ async def enum_printer(f, _, args, kwargs):
 def fmtsong(song: Song) -> str:
     '''Format song artist, album and title data.'''
     return '/'.join((song.artist, song.album, song.title))
+
 
 def fmt_minutes(seconds):
     '''Format seconds as minutes and seconds.

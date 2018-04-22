@@ -7,9 +7,9 @@ from .clients import get_default_client, from_config, MPDClient
 
 @command
 async def main(
-        address: 'Address to connect to.'=None,
+        address: 'Address to connect to.' = None,
         port: Arg(type=int, help='Port to connect to.')=None,
-        server: 'Server to connect to (specified in the config file).'=None,
+        server: 'Server to connect to (specified in the config file).' = None,
         subcommand=(STOP | REQUIRED)
 ):
     '''An MPD client written in Python.'''
@@ -30,5 +30,5 @@ async def main(
     try:
         async with get_client as client:
             await cmd.resume_async(args, client=client)
-    except ConnectionError:
+    except ConnectionFailedError:
         fail("Unable to connect to server.")

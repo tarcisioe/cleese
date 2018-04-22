@@ -1,13 +1,15 @@
-from ampdup import (
-        MPDClient, MPDError, Song, URINotFoundError, State, SearchType
-)
+from typing import List, Tuple
 
-from cleese.utils import (
-        enum_printer, fail, fmt_minutes, fmtsong, line_list_printer, printer
+from ampdup import (
+    MPDClient, MPDError, URINotFoundError, State, SearchType, Subsystem
 )
-from cleese.main import main
 
 from carl import Arg, NotArg
+
+from .utils import (
+    enum_printer, fail, fmt_minutes, fmtsong, line_list_printer, printer
+)
+from .main import main
 
 
 async def _add(client, what):
@@ -18,14 +20,6 @@ async def _add(client, what):
         what (str): The directory or file to add to the queue.
     '''
     await client.add(what.rstrip('/'))
-
-
-async def fmt_current_song(client: MPDClient) -> str:
-    '''Get the current song, properly formatted.'''
-    try:
-        return fmtsong(await client.current_song())
-    except KeyError:
-        return ''
 
 
 @main.subcommand
@@ -44,15 +38,15 @@ async def clear(client: NotArg):
 
 
 @main.subcommand(wrapper=line_list_printer)
-async def commands(client: NotArg):
+async def commands(client: NotArg):  # pylint:disable=unused-argument
     '''Print all available commands.'''
     return main.subcommands
 
 
 @main.subcommand(wrapper=printer)
-async def current(client: NotArg):
+async def current(client: NotArg) -> str:
     '''Get the current song.'''
-    song = await fmt_current_song(client)
+    song = fmtsong(await client.current_song())
     if song:
         return song
     else:
@@ -63,7 +57,7 @@ async def current(client: NotArg):
 async def elapsed(
         client: NotArg,
         seconds: Arg(help='Show in seconds.', action='store_true')=False
-):
+) -> str:
     '''Get the elapsed time and total time, formatted.'''
     current_time, total = await seconds_elapsed(client)
     if not seconds:
@@ -83,15 +77,15 @@ async def goto(
 
 
 @main.subcommand(wrapper=line_list_printer)
-async def idle(client: NotArg):
+async def idle(client: NotArg) -> Subsystem:
     '''Waits for the server to signal any events.'''
     return await client.idle()
 
 
 @main.subcommand(wrapper=printer)
-async def index(client: NotArg):
+async def index(client: NotArg) -> int:
     '''Print current song index on playlist.'''
-    return int((await client.current_song()).pos) + 1
+    return (await client.current_song()).pos + 1
 
 
 @main.subcommand(names=('next',))
@@ -113,7 +107,7 @@ async def play(client: NotArg):
 
 
 @main.subcommand(wrapper=printer)
-async def playlist(client: NotArg):
+async def playlist(client: NotArg) -> str:
     '''Print the current playlist.'''
     songs = await client.playlist_info()
     current_idx = (await client.current_song()).pos
@@ -141,7 +135,7 @@ async def playpause(client: NotArg):
 async def prefix_search(
         client: NotArg,
         prefix: 'Prefix to search for.'
-):
+) -> List[str]:
     '''Search database for a given prefix.'''
     files = await client.search([(SearchType.FILE, '')])
 
@@ -184,14 +178,14 @@ async def setvolume(
                    help='A volume value between 0 and 100.')
 ):
     '''Set the current volume.'''
-    if not (0 <= value <= 100):
+    if not 0 <= value <= 100:
         fail(f'{value} is out of range (0-100).')
 
     await client.setvol(value)
 
 
 @main.subcommand(wrapper=enum_printer)
-async def state(client: NotArg):
+async def state(client: NotArg) -> State:
     '''Get the current playback state (play, pause or stop).'''
     return (await client.status()).state
 
@@ -203,11 +197,11 @@ async def stop(client: NotArg):
 
 
 @main.subcommand(names=('total-time',), wrapper=printer)
-async def total_time(client: NotArg):
+async def total_time(client: NotArg) -> str:
     '''Get the total time of the current queue.'''
     songs = await client.playlist_info()
 
-    total = sum(int(song.time) for song in songs)
+    total = sum(song.time for song in songs)
     return fmt_minutes(total)
 
 
@@ -218,9 +212,9 @@ async def update(client: NotArg):
 
 
 @main.subcommand(names=('vol', 'volume'), wrapper=printer)
-async def volume(client: NotArg):
+async def volume(client: NotArg) -> int:
     '''Get the current volume.'''
-    return int((await client.status()).volume)
+    return (await client.status()).volume
 
 
 @main.subcommand
@@ -231,7 +225,7 @@ async def volumestep(
 ):
     '''Set volume relative to current value.'''
     attempt = (await volume(client)) + step
-    new = min(max(0, attempt), 100)  # clip value between 0 and 100
+    new = min(max(0, attempt), 100)
 
     try:
         await setvolume(client, new)
@@ -240,10 +234,10 @@ async def volumestep(
              f' attempt: {attempt}')
 
 
-async def seconds_elapsed(client: NotArg):
+async def seconds_elapsed(client: MPDClient) -> Tuple[int, int]:
     '''Get the elapsed and total time of the current song.'''
-    current_time = int(float((await client.status()).elapsed))
+    current_time = int((await client.status()).elapsed)
 
-    total = int((await client.current_song()).time)
+    total = (await client.current_song()).time
 
     return current_time, total

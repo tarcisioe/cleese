@@ -3,7 +3,7 @@ import sys
 
 from curio import run
 
-from cleese.commands import main
+from .commands import main
 
 
 def run_main():
