@@ -1,7 +1,6 @@
 from ampdup import MPDClient, MPDError, Song, URINotFoundError
 
-from cleese.utils import (async_printer, exception_converter, fail, fmt_minutes,
-                          fmtsong_ampdup, line_list_printer)
+from cleese.utils import fail, fmt_minutes, fmtsong, line_list_printer, printer
 from cleese.main import main
 
 from carl import Arg, NotArg
@@ -20,7 +19,7 @@ async def _add(client, what):
 async def fmt_current_song(client: MPDClient) -> str:
     '''Get the current song, properly formatted.'''
     try:
-        return fmtsong_ampdup(await client.current_song())
+        return fmtsong(await client.current_song())
     except KeyError:
         return ''
 
@@ -46,7 +45,7 @@ async def commands(client: NotArg):
     return main.subcommands
 
 
-@main.subcommand(wrapper=async_printer)
+@main.subcommand(wrapper=printer)
 async def current(client: NotArg):
     '''Get the current song.'''
     song = await fmt_current_song(client)
@@ -56,7 +55,7 @@ async def current(client: NotArg):
         fail('no song playing.')
 
 
-@main.subcommand(wrapper=async_printer)
+@main.subcommand(wrapper=printer)
 async def elapsed(
         client: NotArg,
         seconds: Arg(help='Show in seconds.', action='store_true')=False
@@ -85,7 +84,7 @@ async def idle(client: NotArg):
     return await client.idle()
 
 
-@main.subcommand(wrapper=async_printer)
+@main.subcommand(wrapper=printer)
 async def index(client: NotArg):
     '''Print current song index on playlist.'''
     return int((await client.current_song()).pos) + 1
@@ -109,13 +108,13 @@ async def play(client: NotArg):
     await client.play()
 
 
-@main.subcommand(wrapper=async_printer)
+@main.subcommand(wrapper=printer)
 async def playlist(client: NotArg):
     '''Print the current playlist.'''
     songs = await client.playlist_info()
     current_idx = (await client.current_song()).pos
 
-    songs = [(fmtsong_ampdup(s), '-> ' if (s.pos == current_idx) else '   ')
+    songs = [(fmtsong(s), '-> ' if (s.pos == current_idx) else '   ')
              for s in songs]
 
     width = len(str(len(songs)))
@@ -184,7 +183,7 @@ async def setvolume(
     await client.setvol(value)
 
 
-@main.subcommand(wrapper=async_printer)
+@main.subcommand(wrapper=printer)
 async def state(client: NotArg):
     '''Get the current playback state (play, pause or stop).'''
     return (await client.status()).state
@@ -196,7 +195,7 @@ async def stop(client: NotArg):
     await client.stop()
 
 
-@main.subcommand(names=('total-time',), wrapper=async_printer)
+@main.subcommand(names=('total-time',), wrapper=printer)
 async def total_time(client: NotArg):
     '''Get the total time of the current queue.'''
     songs = await client.playlist_info()
@@ -211,7 +210,7 @@ async def update(client: NotArg):
     await client.update()
 
 
-@main.subcommand(names=('vol', 'volume'), wrapper=async_printer)
+@main.subcommand(names=('vol', 'volume'), wrapper=printer)
 async def volume(client: NotArg):
     '''Get the current volume.'''
     return int((await client.status()).volume)
