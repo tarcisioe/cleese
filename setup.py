@@ -9,6 +9,7 @@ setup(
         ],
     },
     install_requires=[
+        'ampdup',
         'python-mpd2',
         'carl',
         'wrapt',
