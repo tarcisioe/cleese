@@ -181,6 +181,9 @@ async def setvolume(
                    help='A volume value between 0 and 100.')
 ):
     '''Set the current volume.'''
+    if not (0 <= value <= 100):
+        fail(f'{value} is out of range (0-100).')
+
     await client.setvol(value)
 
 
