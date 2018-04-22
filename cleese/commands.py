@@ -1,4 +1,4 @@
-from ampdup import MPDClient, MPDError, Song, URINotFoundError
+from ampdup import MPDClient, MPDError, Song, URINotFoundError, State
 
 from cleese.utils import fail, fmt_minutes, fmtsong, line_list_printer, printer
 from cleese.main import main
@@ -127,7 +127,7 @@ async def playlist(client: NotArg):
 @main.subcommand
 async def playpause(client: NotArg):
     '''Invert current playback state.'''
-    if await state(client) == 'stop':
+    if await state(client) in (State.STOP, State.PAUSE):
         await play(client)
     else:
         await pause(client)
