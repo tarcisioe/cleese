@@ -1,7 +1,10 @@
-from ampdup import MPDClient, MPDError, Song, URINotFoundError, State
+from ampdup import (
+        MPDClient, MPDError, Song, URINotFoundError, State, SearchType
+)
 
-from cleese.utils import (enum_printer, fail, fmt_minutes, fmtsong,
-                          line_list_printer, printer)
+from cleese.utils import (
+        enum_printer, fail, fmt_minutes, fmtsong, line_list_printer, printer
+)
 from cleese.main import main
 
 from carl import Arg, NotArg
@@ -140,7 +143,7 @@ async def prefix_search(
         prefix: 'Prefix to search for.'
 ):
     '''Search database for a given prefix.'''
-    files = await client.search('file', '')
+    files = await client.search([(SearchType.FILE, '')])
 
     files = [song.file for song in files if song.file.startswith(prefix)]
 
