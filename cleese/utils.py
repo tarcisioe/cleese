@@ -1,5 +1,7 @@
 import sys
 
+from ampdup import Song
+
 from os.path import basename
 
 from wrapt import decorator
@@ -32,9 +34,22 @@ def printer(f, _, args, kwargs):
 
 
 @decorator
+async def async_printer(f, _, args, kwargs):
+    '''Print the return of a function f.'''
+    print(await f(*args, **kwargs))
+
+
+@decorator
 def line_list_printer(f, _, args, kwargs):
     '''Print the return of a function f as a list of lines.'''
     for line in f(*args, **kwargs):
+        print(line)
+
+
+@decorator
+async def line_list_printer(f, _, args, kwargs):
+    '''Print the return of a function f as a list of lines.'''
+    for line in await f(*args, **kwargs):
         print(line)
 
 
@@ -45,6 +60,10 @@ def fmtsong(songdata):
     title = songdata.get('title', '')
     return '/'.join((artist, album, title))
 
+
+def fmtsong_ampdup(song: Song) -> str:
+    '''Format song artist, album and title data.'''
+    return '/'.join((song.artist, song.album, song.title))
 
 def fmt_minutes(seconds):
     '''Format seconds as minutes and seconds.
