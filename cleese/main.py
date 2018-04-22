@@ -1,8 +1,8 @@
 from carl import command, Arg, STOP, REQUIRED
-from ampdup import ConnectionFailedError
+from ampdup import ConnectionFailedError, IdleMPDClient
 
 from .utils import fail
-from cleese.clients import get_default_client, from_config, MPDClient
+from .clients import get_default_client, from_config, MPDClient
 
 
 @command
@@ -14,16 +14,19 @@ async def main(
 ):
     '''An MPD client written in Python.'''
 
+    cmd, args, name = subcommand
+
+    factory = MPDClient if name != 'idle' else IdleMPDClient
+
     if server is not None:
-        get_client = from_config(server)
+        get_client = from_config(server, factory)
     elif address is None and port is None:
-        get_client = get_default_client()
+        get_client = get_default_client(factory)
     else:
         address = 'localhost' if address is None else address
         port = 6600 if port is None else port
-        get_client = MPDClient.make(address, port)
+        get_client = factory.make(address, port)
 
-    cmd, args = subcommand
     try:
         async with get_client as client:
             await cmd.resume_async(args, client=client)
