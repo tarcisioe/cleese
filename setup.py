@@ -5,11 +5,11 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts' : [
-            'cleese = cleese.__main__:run',
+            'cleese = cleese.__main__:run_main',
         ],
     },
     install_requires=[
-        'python-mpd2',
+        'ampdup',
         'carl',
         'wrapt',
     ],
