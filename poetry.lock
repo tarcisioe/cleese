@@ -1,0 +1,75 @@
+[[package]]
+category = "main"
+description = "A type-hinted async python mpd client library."
+name = "ampdup"
+optional = false
+python-versions = ">=3.6,<4.0"
+version = "0.2.5"
+
+[package.dependencies]
+curio = ">=0.9.0,<0.10.0"
+
+[package.dependencies.asyncio-contextmanager]
+python = ">=3.6,<3.7"
+version = ">=1.0,<2.0"
+
+[package.dependencies.dataclasses]
+python = ">=3.6,<3.7"
+version = ">=0.6.0,<0.7.0"
+
+[[package]]
+category = "main"
+description = "Decorator that turns async generator functions into async context managers."
+marker = "python_version >= \"3.6\" and python_version < \"3.7\""
+name = "asyncio-contextmanager"
+optional = false
+python-versions = "*"
+version = "1.0.1"
+
+[[package]]
+category = "main"
+description = "An entry-point library based on argparse, to make creating cli tools as easy as possible."
+name = "carl"
+optional = false
+python-versions = "*"
+version = "0.0.7"
+
+[package.dependencies]
+wrapt = ">=1.10.8"
+
+[[package]]
+category = "main"
+description = "Curio - Concurrent I/O"
+name = "curio"
+optional = false
+python-versions = "*"
+version = "0.9"
+
+[[package]]
+category = "main"
+description = "A backport of the dataclasses module for Python 3.6"
+marker = "python_version >= \"3.6\" and python_version < \"3.7\""
+name = "dataclasses"
+optional = false
+python-versions = "*"
+version = "0.6"
+
+[[package]]
+category = "main"
+description = "Module for decorators, wrappers and monkey patching."
+name = "wrapt"
+optional = false
+python-versions = "*"
+version = "1.10.11"
+
+[metadata]
+content-hash = "0907d182c484af59b1a0427d085c06748a7c1d628dc14b42cc70c8eed57b24a9"
+python-versions = "^3.6"
+
+[metadata.hashes]
+ampdup = ["0092c2c1963f4b52dcd8f12507fd4bb5151c843b7051ac3bcbb07e78378c3963", "695b835567f2a7d2cb297211c99595ea387f79b6a5631c07c4bda16f7cc2f7b1"]
+asyncio-contextmanager = ["93b4620cd79623c3988c9f43e6f502263968645cd13aed3327a7ec8be43221d5"]
+carl = ["5b466a19eb302ea2f2a708c6a88be21ec6b6395f856d046764f70762c2e67793"]
+curio = ["51d1a7b49b4f8dd1486ac785c72d522962e93ccfdcfc1f818f5c7553a307b5ef"]
+dataclasses = ["454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f", "6988bd2b895eef432d562370bb707d540f32f7360ab13da45340101bc2307d84"]
+wrapt = ["d4d560d479f2c21e1b5443bbd15fe7ec4b37fe7e53d335d3b9b0a7b1226fe3c6"]
