@@ -1,67 +1,52 @@
-from mpd import CommandError
+from typing import List, Tuple
 
-from cleese.clients import connected
-from cleese.utils import (exception_converter, fail, fmt_minutes, fmtsong,
-                          line_list_printer, printer)
-from cleese.main import main
+from ampdup import (
+    MPDClient, MPDError, URINotFoundError, State, SearchType, Subsystem
+)
 
 from carl import Arg, NotArg
 
+from .utils import (
+    enum_printer, fail, fmt_minutes, fmtsong, line_list_printer, printer
+)
+from .main import main
 
-@exception_converter(CommandError,
-                     'no files found in database matching: {args[1]}',
-                     FileNotFoundError)
-def _add(client, what):
+
+async def _add(client, what):
     '''Add a directory or a file from the library to a client's queue.
 
     Args:
         c (Client): The client on which to add songs.
         what (str): The directory or file to add to the queue.
     '''
-    client.add(what.rstrip('/'))
-
-
-def current_song(client):
-    '''Get the current song from the default server.'''
-    with connected(client):
-        return client.currentsong()
-
-
-def fmt_current_song(client):
-    '''Get the current song, properly formatted.'''
-    try:
-        return fmtsong(current_song(client))
-    except KeyError:
-        return ''
+    await client.add(what.rstrip('/'))
 
 
 @main.subcommand
-def add(client: NotArg, what: 'What to add.'):
+async def add(client: NotArg, what: 'What to add.'):
     '''Add a directory or file from library to the playing queue.'''
     try:
-        with connected(client):
-            _add(client, what)
-    except FileNotFoundError as e:
+        await _add(client, what)
+    except URINotFoundError as e:
         fail(e)
 
 
 @main.subcommand
-def clear(client: NotArg):
+async def clear(client: NotArg):
     '''Clear the playing queue.'''
-    with connected(client):
-        client.clear()
+    await client.clear()
 
 
 @main.subcommand(wrapper=line_list_printer)
-def commands(client: NotArg):  # pylint: disable=unused-argument
+async def commands(client: NotArg):  # pylint:disable=unused-argument
     '''Print all available commands.'''
     return main.subcommands
 
 
 @main.subcommand(wrapper=printer)
-def current(client: NotArg):
+async def current(client: NotArg) -> str:
     '''Get the current song.'''
-    song = fmt_current_song(client)
+    song = fmtsong(await client.current_song())
     if song:
         return song
     else:
@@ -69,183 +54,190 @@ def current(client: NotArg):
 
 
 @main.subcommand(wrapper=printer)
-def elapsed(client: NotArg,
-            seconds: Arg(help='Show in seconds.', action='store_true')=False):
+async def elapsed(
+        client: NotArg,
+        seconds: Arg(help='Show in seconds.', action='store_true')=False
+) -> str:
     '''Get the elapsed time and total time, formatted.'''
-    current_time, total = seconds_elapsed(client)
+    current_time, total = await seconds_elapsed(client)
     if not seconds:
         current_time = fmt_minutes(current_time)
         total = fmt_minutes(total)
-    return '{}/{}'.format(current_time, total)
+    return f'{current_time}/{total}'
 
 
 @main.subcommand
-def goto(client: NotArg,
-         where: Arg(type=int,
-                    help='Point in song where to seek to (seconds).')):
+async def goto(
+        client: NotArg,
+        where: Arg(type=int,
+                   help='Point in song where to seek to (seconds).')
+):
     '''Go to a specific point in the current song.'''
-    with connected(client):
-        client.seekcur(where)
+    await client.seek_cur(where)
 
 
 @main.subcommand(wrapper=line_list_printer)
-def idle(client: NotArg):
+async def idle(client: NotArg) -> Subsystem:
     '''Waits for the server to signal any events.'''
-    with connected(client):
-        return client.idle()
-
-
-@main.subcommand(names=('next',))
-def next_song(client: NotArg):
-    '''Go to next song in queue.'''
-    with connected(client):
-        client.next()
-
-
-@main.subcommand
-def pause(client: NotArg):
-    '''Pause playback.'''
-    with connected(client):
-        client.pause()
-
-
-@main.subcommand
-def play(client: NotArg):
-    '''Play playback.'''
-    with connected(client):
-        client.play()
+    return await client.idle()
 
 
 @main.subcommand(wrapper=printer)
-def playlist(client: NotArg):
-    '''Print the current playlist.'''
-    with connected(client):
-        songs = client.playlistinfo()
-    current_idx = current_song(client)['pos']
+async def index(client: NotArg) -> int:
+    '''Print current song index on playlist.'''
+    return (await client.current_song()).pos + 1
 
-    songs = [(fmtsong(s), '-> ' if (s['pos'] == current_idx) else '   ')
+
+@main.subcommand(names=('next',))
+async def next_song(client: NotArg):
+    '''Go to next song in queue.'''
+    await client.next()
+
+
+@main.subcommand
+async def pause(client: NotArg):
+    '''Pause playback.'''
+    await client.pause(True)
+
+
+@main.subcommand
+async def play(client: NotArg):
+    '''Play playback.'''
+    await client.play()
+
+
+@main.subcommand(wrapper=printer)
+async def playlist(client: NotArg) -> str:
+    '''Print the current playlist.'''
+    songs = await client.playlist_info()
+    current_idx = (await client.current_song()).pos
+
+    songs = [(fmtsong(s), '-> ' if (s.pos == current_idx) else '   ')
              for s in songs]
 
     width = len(str(len(songs)))
 
-    lines = ('{m} {i:#{w}}: {n}'.format(m=marker, i=i, n=name, w=width)
+    lines = (f'{marker} {i:#{width}}: {name}'
              for i, (name, marker) in enumerate(songs, 1))
     return '\n'.join(lines)
 
 
 @main.subcommand
-def playpause(client: NotArg):
+async def playpause(client: NotArg):
     '''Invert current playback state.'''
-    if state(client) == 'stop':
-        play(client)
+    if await state(client) in (State.STOP, State.PAUSE):
+        await play(client)
     else:
-        pause(client)
+        await pause(client)
 
 
 @main.subcommand(names=('prefix-search',), wrapper=line_list_printer)
-def prefix_search(client: NotArg,
-                  prefix: 'Prefix to search for.'):
+async def prefix_search(
+        client: NotArg,
+        prefix: 'Prefix to search for.'
+) -> List[str]:
     '''Search database for a given prefix.'''
-    with connected(client):
-        files = client.search('file', '')
-    files = [song['file'] for song in files if song['file'].startswith(prefix)]
+    files = await client.search([(SearchType.FILE, '')])
+
+    files = [song.file for song in files if song.file.startswith(prefix)]
 
     return files
 
 
 @main.subcommand
-def prev(client: NotArg):
+async def prev(client: NotArg):
     '''Go to previous song in queue.'''
-    with connected(client):
-        client.previous()
+    await client.previous()
 
 
 @main.subcommand
-def replace(client: NotArg,
-            what: 'What to replace.'):
+async def replace(
+        client: NotArg,
+        what: 'What to replace.'
+):
     '''Replace the current queue by something.'''
-    clear(client)
-    add(client, what)
-    play(client)
+    await clear(client)
+    await add(client, what)
+    await play(client)
 
 
 @main.subcommand
-def seek(client: NotArg,
-         step: Arg(type=int,
-                   help='How many seconds to advance or backtrack.')):
+async def seek(
+        client: NotArg,
+        step: Arg(type=int,
+                  help='How many seconds to advance or backtrack.')
+):
     '''Seek forward or backwards. Use negative values to seek backwards.'''
-    with connected(client):
-        client.seekcur('{:+}'.format(step))
+    await client.seek_cur(step)
 
 
 @main.subcommand
-def setvolume(client: NotArg,
-              value: Arg(type=int,
-                         help='A volume value between 0 and 100.')):
+async def setvolume(
+        client: NotArg,
+        value: Arg(type=int,
+                   help='A volume value between 0 and 100.')
+):
     '''Set the current volume.'''
-    with connected(client):
-        client.setvol(value)
+    if not 0 <= value <= 100:
+        fail(f'{value} is out of range (0-100).')
+
+    await client.setvol(value)
 
 
-@main.subcommand(wrapper=printer)
-def state(client: NotArg):
+@main.subcommand(wrapper=enum_printer)
+async def state(client: NotArg) -> State:
     '''Get the current playback state (play, pause or stop).'''
-    with connected(client):
-        return client.status()['state']
+    return (await client.status()).state
 
 
 @main.subcommand
-def stop(client: NotArg):
+async def stop(client: NotArg):
     '''Stop playback.'''
-    with connected(client):
-        client.stop()
+    await client.stop()
 
 
 @main.subcommand(names=('total-time',), wrapper=printer)
-def total_time(client: NotArg):
+async def total_time(client: NotArg) -> str:
     '''Get the total time of the current queue.'''
-    with connected(client):
-        songs = client.playlistinfo()
+    songs = await client.playlist_info()
 
-    total = sum(int(song['time']) for song in songs)
+    total = sum(song.time for song in songs)
     return fmt_minutes(total)
 
 
 @main.subcommand
-def update(client: NotArg):
+async def update(client: NotArg):
     '''Update the server database.'''
-    with connected(client):
-        client.update()
+    await client.update()
 
 
 @main.subcommand(names=('vol', 'volume'), wrapper=printer)
-def volume(client: NotArg):
+async def volume(client: NotArg) -> int:
     '''Get the current volume.'''
-    with connected(client):
-        return int(client.status()['volume'])
+    return (await client.status()).volume
 
 
 @main.subcommand
-def volumestep(
+async def volumestep(
         client: NotArg,
         step: Arg(type=int,
                   help='Step in which to modify volume, positive or negative.')
 ):
     '''Set volume relative to current value.'''
-    attempt = volume(client) + step
-    new = min(max(0, attempt), 100)  # clip value between 0 and 100
+    attempt = (await volume(client)) + step
+    new = min(max(0, attempt), 100)
 
     try:
-        setvolume(client, new)
-    except CommandError:
+        await setvolume(client, new)
+    except MPDError:
         fail('cannot set volume outside range 0-100.'
-             ' attempt: {}'.format(attempt))
+             f' attempt: {attempt}')
 
 
-def seconds_elapsed(client: NotArg):
+async def seconds_elapsed(client: MPDClient) -> Tuple[int, int]:
     '''Get the elapsed and total time of the current song.'''
-    with connected(client):
-        current_time = int(float(client.status()['elapsed']))
-    total = int(current_song(client)['time'])
+    current_time = int((await client.status()).elapsed)
+
+    total = (await client.current_song()).time
 
     return current_time, total
