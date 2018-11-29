@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 
-from curio import run
+from asyncio import run
 
 from .commands import main
 
