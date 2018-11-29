@@ -22,6 +22,14 @@ async def _add(client, what):
     await client.add(what.rstrip('/'))
 
 
+async def fmt_current_song(client: MPDClient) -> str:
+    '''Get the current song, properly formatted.'''
+    try:
+        return fmtsong(await client.current_song())
+    except KeyError:
+        return ''
+
+
 @main.subcommand
 async def add(client: NotArg, what: 'What to add.'):
     '''Add a directory or file from library to the playing queue.'''
@@ -197,9 +205,20 @@ async def stop(client: NotArg):
 
 
 @main.subcommand(names=('total-time',), wrapper=printer)
-async def total_time(client: NotArg) -> str:
-    '''Get the total time of the current queue.'''
-    songs = await client.playlist_info()
+async def total_time(
+        client: NotArg,
+        search: Arg(type=str,
+                    help='What to calculate total-time for.',
+                    nargs='?',
+                    default=None),
+) -> str:
+    '''Get the total time of the current queue, or based on a search term.'''
+
+    if search:
+        songs = await client.search([(SearchType.FILE, '')])
+        songs = [s for s in songs if s.file.startswith(search)]
+    else:
+        songs = await client.playlist_info()
 
     total = sum(song.time for song in songs)
     return fmt_minutes(total)
