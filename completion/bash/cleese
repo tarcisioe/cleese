@@ -53,6 +53,7 @@ _cleese() {
         --server)
             return 0
             ;;
+        total-time) ;&
         replace) ;&
         add)
             read prefix <<< ${cur#'"'}
