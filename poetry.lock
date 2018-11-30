@@ -4,7 +4,7 @@ description = "A type-hinted async python mpd client library."
 name = "ampdup"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "0.3.0"
+version = "0.3.1"
 
 [[package]]
 category = "main"
@@ -30,6 +30,6 @@ content-hash = "1161be77c7448a6fb69c99449a18dbbdf53ed0db795959565468dc151ed54b7c
 python-versions = "^3.7"
 
 [metadata.hashes]
-ampdup = ["51753496546df655dd17bab1a25c3ed492c39b5286c8873aa91466f8d38e1c8a", "672dc31326128b990d1ade8f46600f1edb366a9cc901ea8b021bdb801b49ac79"]
+ampdup = ["1710e0bce983086fb165047f545e64bf5036053aa3ae8acba54e60d0b06832aa", "da495d5e91035e7f98553d098cf74b2ce3e2dfe72a6f79753b9b155de22953c7"]
 carl = ["5b466a19eb302ea2f2a708c6a88be21ec6b6395f856d046764f70762c2e67793"]
 wrapt = ["d4d560d479f2c21e1b5443bbd15fe7ec4b37fe7e53d335d3b9b0a7b1226fe3c6"]
