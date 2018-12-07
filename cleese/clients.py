@@ -32,7 +32,7 @@ class CleeseClient(MPDClient):
         try:
             return await self.idle_client.idle(*subsystems)
         except ConnectionFailedError:
-            self.idle_client.reconnect()
+            await self.idle_client.reconnect()
             return await self.idle_client.idle(*subsystems)
 
     async def _reconnect_no_idle(self):
