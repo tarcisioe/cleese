@@ -81,7 +81,7 @@ async def goto(
                    help='Point in song where to seek to (seconds).')
 ):
     '''Go to a specific point in the current song.'''
-    await client.seek_cur(where)
+    await client.seek_cur_abs(where)
 
 
 @main.subcommand(wrapper=line_list_printer)
@@ -176,7 +176,7 @@ async def seek(
                   help='How many seconds to advance or backtrack.')
 ):
     '''Seek forward or backwards. Use negative values to seek backwards.'''
-    await client.seek_cur(step)
+    await client.seek_cur_rel(step)
 
 
 @main.subcommand
