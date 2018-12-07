@@ -16,7 +16,11 @@ persistent=yes
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=
+load-plugins=pylint_quotes
+
+string-quote=single
+triple-quote=single
+docstring-quote=single
 
 # Use multiple processes to speed up Pylint.
 jobs=1
@@ -60,7 +64,7 @@ confidence=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 # disable=unichr-builtin,standarderror-builtin,old-raise-syntax,old-division,coerce-method,round-builtin,long-suffix,execfile-builtin,print-statement,file-builtin,apply-builtin,unpacking-in-except,next-method-called,nonzero-method,range-builtin-not-iterating,map-builtin-not-iterating,unicode-builtin,xrange-builtin,useless-suppression,import-star-module-level,reduce-builtin,cmp-method,intern-builtin,long-builtin,dict-view-method,parameter-unpacking,zip-builtin-not-iterating,dict-iter-method,reload-builtin,old-octal-literal,no-absolute-import,oct-method,old-ne-operator,coerce-builtin,setslice-method,basestring-builtin,metaclass-assignment,filter-builtin-not-iterating,hex-method,cmp-builtin,using-cmp-argument,input-builtin,suppressed-message,backtick,getslice-method,buffer-builtin,raising-string,delslice-method,raw_input-builtin,indexing-exception
-disable=locally-disabled
+disable=locally-disabled,too-many-return-statements
 
 
 [REPORTS]
@@ -208,10 +212,10 @@ variable-rgx=[a-z_][a-z0-9_]*$
 variable-name-hint=[a-z_][a-z0-9_]*$
 
 # Regular expression matching correct class names
-class-rgx=[A-Z_][a-zA-Z0-9]+$
+class-rgx=[A-Z_][a-zA-Z0-9]*$
 
 # Naming hint for class names
-class-name-hint=[A-Z_][a-zA-Z0-9]+$
+class-name-hint=[A-Z_][a-zA-Z0-9]*$
 
 # Regular expression matching correct attribute names
 attr-rgx=[a-z_][a-z0-9_]*$
@@ -261,7 +265,7 @@ ignored-modules=
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set). This supports can work
 # with qualified names.
-ignored-classes=MPDClient
+ignored-classes=Field
 
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
