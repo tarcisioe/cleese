@@ -165,9 +165,13 @@ async def prev(client: NotArg):
 @main.subcommand
 async def replace(
         client: NotArg,
-        what: 'What to replace.'
+        what: 'What to replace.',
+        push_first: Arg('--push', action='store_true')=False,
 ):
     '''Replace the current queue by something.'''
+    if push_first:
+        await push(client, pause_before=True)
+
     await clear(client)
     await add(client, what)
     await play(client)
