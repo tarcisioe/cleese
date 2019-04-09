@@ -1,3 +1,6 @@
+import json
+
+from pathlib import Path
 from typing import List, Tuple
 
 from ampdup import (
@@ -252,6 +255,76 @@ async def volumestep(
     except MPDError:
         fail('cannot set volume outside range 0-100.'
              f' attempt: {attempt}')
+
+
+def get_stack():
+    stackdir = Path.home() / Path('.cleese/stack/')
+
+    if not stackdir.exists():
+        stackdir.mkdir(parents=True)
+
+    if not stackdir.is_dir():
+        fail(f'{stackdir} must be a directory')
+
+    return sorted(stackdir.glob('*.stk'), key=lambda x: int(x.stem))
+
+
+def next_in_stack(stack: List[Path]):
+    stackdir = Path.home() / Path('.cleese/stack/')
+
+    if not stack:
+        return stackdir / Path('1.stk')
+
+    next_number = int(stack[-1].stem) + 1
+    return stackdir / Path(f'{next_number}.skt')
+
+
+@main.subcommand
+async def push(
+        client: NotArg,
+        pause_before: Arg('--pause', action='store_true')=False
+):
+    if pause_before:
+        await pause(client)
+
+    stackfile = next_in_stack(get_stack())
+
+    with stackfile.open('w') as s:
+        json.dump(
+            {
+                'elapsed': (await client.status()).elapsed,
+                'pos': (await client.current_song()).pos,
+                'playlist': [song.file for song in await client.playlist_info()],
+            },
+            s
+        )
+
+
+@main.subcommand
+async def pop(
+        client: NotArg,
+        play_after: Arg('--play', action='store_true')=False
+):
+    stack = get_stack()
+
+    if not stack:
+        fail('Stack is empty!')
+
+    last = stack[-1]
+
+    with last.open('r') as l:
+        full_state = json.load(l)
+
+    await client.clear()
+    for i in full_state['playlist']:
+        await client.add(i)
+
+    await client.seek(full_state['pos'], full_state['elapsed'])
+
+    if not play_after:
+        await pause(client)
+
+    last.unlink()
 
 
 async def seconds_elapsed(client: MPDClient) -> Tuple[int, int]:
