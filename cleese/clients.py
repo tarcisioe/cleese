@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List
 
 from ampdup import MPDClient, IdleMPDClient, ConnectionFailedError, Subsystem
@@ -45,10 +46,19 @@ class CleeseClient(MPDClient):
 
 def from_config(server_name: str):
     configs = read_config()
-    address = configs['servers:' + server_name]['address']
-    port = int(configs['servers:' + server_name]['port'])
+    server_config = configs['servers:' + server_name]
 
-    return CleeseClient.make(address, port)
+    server_type = server_config.get('type', 'network')
+
+    if server_type == 'network':
+        address = server_config['address']
+        port = int(server_config['port'])
+
+        return CleeseClient.make(address, port)
+
+    socket = server_config['socket']
+
+    return CleeseClient.make_unix(Path(socket))
 
 
 def get_default_client():
