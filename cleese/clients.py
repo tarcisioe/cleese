@@ -15,6 +15,10 @@ class CleeseClient(MPDClient):
         await super().connect(address, port)
         await self.idle_client.connect(address, port)
 
+    async def connect_unix(self, path: Path):
+        await super().connect_unix(path)
+        await self.idle_client.connect_unix(path)
+
     async def disconnect(self):
         await super().disconnect()
         await self.idle_client.disconnect()
@@ -23,7 +27,7 @@ class CleeseClient(MPDClient):
         try:
             return await super().run_command(command)
         except ConnectionFailedError:
-            await self._reconnect_no_idle()
+            await super().reconnect()
             return await super().run_command(command)
 
     async def idle(
@@ -36,12 +40,9 @@ class CleeseClient(MPDClient):
             await self.idle_client.reconnect()
             return await self.idle_client.idle(*subsystems)
 
-    async def _reconnect_no_idle(self):
-        if self.details is None:
-            raise ConnectionFailedError('Client was not previously connected.')
-
-        await super().disconnect()
-        await super().connect(*self.details)
+    async def reconnect(self):
+        await super().reconnect()
+        await self.idle_client.reconnect()
 
 
 def from_config(server_name: str):

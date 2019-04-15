@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from carl import command, Arg, STOP, REQUIRED
-from ampdup import ConnectionFailedError, IdleMPDClient
+from ampdup import ConnectionFailedError
 
 from .utils import fail
 from .clients import get_default_client, from_config, CleeseClient
@@ -17,7 +17,7 @@ async def main(
 ):
     '''An MPD client written in Python.'''
 
-    cmd, args, name = subcommand
+    cmd, args, _ = subcommand
 
     if server is not None:
         get_client = from_config(server)
@@ -34,4 +34,4 @@ async def main(
         async with get_client as client:
             await cmd.resume_async(args, client=client)
     except ConnectionFailedError:
-        fail("Unable to connect to server.")
+        fail('Unable to connect to server.')

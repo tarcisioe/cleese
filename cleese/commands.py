@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
 from ampdup import (
-    MPDClient, MPDError, URINotFoundError, State, SearchType, Subsystem
+    MPDClient, MPDError, URINotFoundError, State, SearchType, Subsystem, NoCurrentSongError
 )
 
 from carl import Arg, NotArg
@@ -54,11 +54,12 @@ async def commands(client: NotArg):  # pylint:disable=unused-argument
 @main.subcommand(wrapper=printer)
 async def current(client: NotArg) -> str:
     '''Get the current song.'''
-    song = fmtsong(await client.current_song())
-    if song:
-        return song
-    else:
+    try:
+        song = fmtsong(await client.current_song())
+    except NoCurrentSongError:
         fail('no song playing.')
+
+    return song
 
 
 @main.subcommand(wrapper=printer)
