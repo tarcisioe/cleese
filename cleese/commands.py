@@ -280,7 +280,7 @@ def next_in_stack(stack: List[Path]):
         return stackdir / Path('1.stk')
 
     next_number = int(stack[-1].stem) + 1
-    return stackdir / Path(f'{next_number}.skt')
+    return stackdir / Path(f'{next_number}.stk')
 
 
 @main.subcommand
