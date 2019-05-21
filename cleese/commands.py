@@ -34,12 +34,21 @@ async def fmt_current_song(client: MPDClient) -> str:
 
 
 @main.subcommand
-async def add(client: NotArg, what: 'What to add.'):
+async def add(
+    client: NotArg,
+    what: 'What to add.',
+    sort: str = None,
+):
     '''Add a directory or file from library to the playing queue.'''
-    try:
-        await _add(client, what)
-    except URINotFoundError as e:
-        fail(e)
+    if sort is None:
+        try:
+            return await _add(client, what)
+        except URINotFoundError as e:
+            fail(e)
+
+    songs = await client.find(f"(ARTIST == '{what}')")
+    for song in sorted(songs, key=lambda s: (getattr(s, sort), s.track)):
+        await _add(client, song.file)
 
 
 @main.subcommand
@@ -167,13 +176,14 @@ async def replace(
         client: NotArg,
         what: 'What to replace.',
         push_first: Arg('--push', action='store_true')=False,
+        sort: str = None,
 ):
     '''Replace the current queue by something.'''
     if push_first:
         await push(client, pause_before=True)
 
     await clear(client)
-    await add(client, what)
+    await add(client, what, sort)
     await play(client)
 
 
