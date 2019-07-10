@@ -46,8 +46,10 @@ async def add(
         except URINotFoundError as e:
             fail(e)
 
+    sort_keys = sort.split(',')
+
     songs = await client.find(f"(ARTIST == '{what}')")
-    for song in sorted(songs, key=lambda s: (getattr(s, sort), s.track)):
+    for song in sorted(songs, key=lambda s: (*(getattr(s, k) for k in sort_keys), s.track)):
         await _add(client, song.file)
 
 
