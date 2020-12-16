@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cleese-mpd"
-version = "0.16.1"
+version = "0.16.2"
 description = "An MPD client based on ampdup."
 authors = ["Tarcisio Eduardo Moreira Crocomo <tarcisio.crocomo@gmail.com>"]
 license = "MIT"
@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.7"
 carl = "^0.0.7"
-ampdup = "^0.9.0"
+ampdup = "^0.12.0"
 
 [tool.poetry.scripts]
 cleese = "cleese.__main__:run_main"
